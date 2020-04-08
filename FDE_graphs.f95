@@ -1,3 +1,6 @@
+!=- Fractal Dimension Estimation
+!=- © Stanislav Shirokov, 2014-2020
+
 module FDE_graphs
 	use GNUplot
 
@@ -100,6 +103,8 @@ module FDE_graphs
       subroutine FDE_plot_script(data_file_path)
          character(len) data_file_path
 
+               call clear_plot_fields
+
 					GNUfields(ls1)			=	'set linestyle 1 lw 1 pt 7 ps 0.2 lt rgb "blue"'
 					GNUfields(ls2)			=	'set linestyle 2 lw 1 pt 7 ps 0.2 lt rgb "red"'
 					GNUfields(ls3)			=	'set linestyle 3 lw 1 pt 7 ps 0.2 lt rgb "black"'
@@ -147,8 +152,6 @@ module FDE_graphs
 
 					graph_name = FDE_geometry_mask(1:1)
                   GNUfields(extention_out_figure)='#png' ; call plot(data_file_path)
-
-               call clear_plot_fields
 
          end subroutine
 

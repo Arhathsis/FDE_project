@@ -1,8 +1,12 @@
+!=- Fractal Dimension Estimation
+!=- © Stanislav Shirokov, 2014-2020
+
 module FDE_config
    use global
 
    logical ::  sets_regenerating = .false. , &  !=- .true. | .false.
-               FDE_recalculating = .false.
+               FDE_recalculating = .false. , &
+               FDE_replot        = .false.      !=- have not been written
 
    integer ::  luminosity_model = 0  !=- 0 is uniform geometry (default), 1 is functions, 2 is ...
 

@@ -1,4 +1,6 @@
 !=- Fractal Dimension Estimation
+!=- © Stanislav Shirokov, 2014-2020
+
 	program FDE
 		use FDE_citadel
 

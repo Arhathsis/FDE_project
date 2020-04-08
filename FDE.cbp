@@ -19,21 +19,8 @@
 				<Option compiler="g95" />
 			</Target>
 		</Build>
-		<Unit filename="../library/Cosmology.f95">
+		<Unit filename="Cosmology.f95">
 			<Option weight="2" />
-		</Unit>
-		<Unit filename="../library/GNUplot.f95">
-			<Option weight="1" />
-		</Unit>
-		<Unit filename="../library/global.f95">
-			<Option weight="0" />
-		</Unit>
-		<Unit filename="../library/math.f95">
-			<Option weight="1" />
-		</Unit>
-		<Unit filename="../library/trash.f95">
-			<Option weight="0" />
-			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="FDE_Debug.f95">
 			<Option weight="4" />
@@ -53,15 +40,36 @@
 		<Unit filename="FDE_graphs.f95">
 			<Option weight="4" />
 		</Unit>
-		<Unit filename="FDE_methods.f95" />
+		<Unit filename="FDE_methods.f95">
+			<Option weight="2" />
+		</Unit>
 		<Unit filename="FDE_paths.f95">
 			<Option weight="1" />
 		</Unit>
 		<Unit filename="FDE_sqripts.f95">
 			<Option weight="5" />
 		</Unit>
+		<Unit filename="GNUplot.f95">
+			<Option weight="1" />
+		</Unit>
+		<Unit filename="global.f95">
+			<Option weight="0" />
+		</Unit>
 		<Unit filename="main.f95">
 			<Option weight="7" />
+		</Unit>
+		<Unit filename="math.f95">
+			<Option weight="1" />
+		</Unit>
+		<Unit filename="tests.f95">
+			<Option compile="0" />
+			<Option link="0" />
+			<Option weight="2" />
+		</Unit>
+		<Unit filename="trash.f95">
+			<Option compile="0" />
+			<Option link="0" />
+			<Option weight="0" />
 		</Unit>
 		<Extensions>
 			<code_completion />

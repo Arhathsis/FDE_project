@@ -1,3 +1,6 @@
+!=- Fractal Dimension Estimation
+!=- © Stanislav Shirokov, 2014-2020
+
 module FDE_catalogs
    use FDE_paths
    use FDE_config

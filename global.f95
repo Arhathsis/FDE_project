@@ -1,3 +1,6 @@
+!=- fortran-libraries
+!=- © Stanislav Shirokov, 2014-2020
+
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
 	module global
 		implicit none
@@ -29,6 +32,17 @@
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
 		contains
 
+         character(len) function make_workdir()
+            call system( 'echo %cd% > log.log' )
+            open(1,file='log.log',status='old')
+               read(1,*) line
+               close(1)
+
+               make_workdir=''
+               do i=1,len
+                  if (line(i:i)=='\') make_workdir = line(1:i)
+                  end do
+            end function make_workdir
 
 
          character(len) function name(path)

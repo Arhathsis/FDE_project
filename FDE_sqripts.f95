@@ -1,3 +1,6 @@
+!=- Fractal Dimension Estimation
+!=- © Stanislav Shirokov, 2014-2020
+
 module FDE_sqripts
 	use math
 	use GNUplot
