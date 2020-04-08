@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="FDE" />
+		<Option pch_mode="2" />
+		<Option compiler="g95" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/FDE" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="g95" />
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/FDE" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="g95" />
+			</Target>
+		</Build>
+		<Unit filename="../library/Cosmology.f95">
+			<Option weight="2" />
+		</Unit>
+		<Unit filename="../library/GNUplot.f95">
+			<Option weight="1" />
+		</Unit>
+		<Unit filename="../library/global.f95">
+			<Option weight="0" />
+		</Unit>
+		<Unit filename="../library/math.f95">
+			<Option weight="1" />
+		</Unit>
+		<Unit filename="../library/trash.f95">
+			<Option weight="0" />
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="FDE_Debug.f95">
+			<Option weight="4" />
+		</Unit>
+		<Unit filename="FDE_catalogs.f95">
+			<Option weight="3" />
+		</Unit>
+		<Unit filename="FDE_citadel.f95">
+			<Option weight="6" />
+		</Unit>
+		<Unit filename="FDE_config.f95">
+			<Option weight="1" />
+		</Unit>
+		<Unit filename="FDE_generators.f95">
+			<Option weight="3" />
+		</Unit>
+		<Unit filename="FDE_graphs.f95">
+			<Option weight="4" />
+		</Unit>
+		<Unit filename="FDE_methods.f95" />
+		<Unit filename="FDE_paths.f95">
+			<Option weight="1" />
+		</Unit>
+		<Unit filename="FDE_sqripts.f95">
+			<Option weight="5" />
+		</Unit>
+		<Unit filename="main.f95">
+			<Option weight="7" />
+		</Unit>
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
