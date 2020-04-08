@@ -9,7 +9,7 @@ module FDE_citadel
 
 		subroutine preparation
 
-				write(*,*) 'Fractal Dimension Estimation is runned' ; write(*,*)
+				write(*,*) 'Fractalg Dimension Estimation is runned' ; write(*,*)
 
             call gen_paths
             call the_catalog_heading
