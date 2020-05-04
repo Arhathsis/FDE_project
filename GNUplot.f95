@@ -104,11 +104,10 @@
 			subroutine plot(datafile) !-=- plot autoscripting
 				character(len) datafile
 					GNUdatafile=slashfix(datafile); call file_name(datafile,ii,jj)
-					scriptpath = datafile(1:ii-1)//'plots\GNUscripts\'//datafile(ii:jj)//'_'//trim(graph_name)//'.plt'
+					scriptpath = datafile(1:ii-1)//'plots/GNUscripts/'//datafile(ii:jj)//'_'//trim(graph_name)//'.plt'
 
-					call system('MD ' // datafile(1:ii-1)//'plots\GNUscripts\' // ' >> log.log ' )
-					call system('MD ' // datafile(1:ii-1)//'plots\'//datafile(ii:jj)//'\'//trim(fig_dir) // ' >> log.log ' )
-
+					call system('mkdir -p ' // datafile(1:ii-1)//'plots/GNUscripts/' // ' >> log.log ' )
+					call system('mkdir -p ' // datafile(1:ii-1)//'plots/'//datafile(ii:jj)//'/'//trim(fig_dir) // ' >> log.log ' )
 					open(9,file=scriptpath,status='replace')
 						if (exptension(GNUfields(29))==1) then
 							write(9,*) epsterm
@@ -127,11 +126,11 @@
 						!write(9,*) 'plot "<echo -1 10**'//trim(realtostr(GNUnorm))//'" w p ls 10 notitle \'
 						write(9,*) 'plot ',(trim(GNUfields(i)),i=33,N_GNUfields) ; close(9);
 
-					figoutput=backslashfix(figoutput)
-					call system( 'gnuplot ' // trim(scriptpath) // ' && move ' // trim(figoutput) // ' ' // &
-						datafile(1:ii-1)//'plots\'//datafile(ii:jj)//'\'//trim(fig_dir) )
+					!figoutput=backslashfix(figoutput)
+					call system( 'gnuplot ' // trim(scriptpath) // ' && mv ' // trim(figoutput) // ' ' // &
+						datafile(1:ii-1)//'plots/'//datafile(ii:jj)//'/'//trim(fig_dir) )
 
-					open(8,file=datafile(1:ii-1)//'plots\GNUscripts\clear.bat',status='replace')
+					open(8,file=datafile(1:ii-1)//'plots/GNUscripts/clear.bat',status='replace')
 						write(8,*) 'taskkill /im wgnuplot*' ; close(8)
 
 

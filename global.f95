@@ -117,7 +117,7 @@
 
          subroutine shell_MD_Tree
                do i=1,size(folders(:))
-						if (folders(i).ne.'') call system( 'MD '// trim(folders(i)) )
+						if (folders(i).ne.'') call system( 'mkdir -p '// trim(folders(i)) )
                   enddo
             end subroutine shell_MD_Tree
 

@@ -440,13 +440,19 @@
 
          subroutine read_FDE_data_file(data_file_path)
             character(len) data_file_path
-               open(unit_7,file=data_file_path,status='old',err=22)
+            integer :: i
+               open(200,file=data_file_path,status='old',err=22)
 
+                  write(*,*) 'file: ', data_file_path
                   XYY(:,:) = 0d0
-                  read(unit_7,*,end=11) XYY
+                  i = 1
+                  do
+                     read(200,*,end=11) XYY(:,i)
+                     i = i + 1
+                  enddo
 
                22 continue ; write(*,*) 'no file'
-               11 continue ; close(unit_7)
+               11 continue ; close(200)
             end subroutine read_FDE_data_file
 
 
