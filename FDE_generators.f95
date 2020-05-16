@@ -9,12 +9,14 @@ module FDE_generators
    use cosmology
    use math
 
+   logical ::  FDE_generator_report_flag = .true.
+
    real(8) ::  Lum, mag , catalog_line(N_col_std)=0d0 , chance , noise , Fractal_Dimension , &
                nearest_point_to_origins(3) , min_dist
 
    integer ::  fractionality , gen_start , iteration , generations , uniform_approach_parameter , &
                step , imax , imin , jmin , jmax , kmin , kmax, &
-               N_cyrle , FDE_seed = 1 , FDE_seed_order = 1
+               unit_cyrle , N_cyrle , FDE_seed = 1 , FDE_seed_order = 1
 
    contains
 
@@ -68,22 +70,35 @@ module FDE_generators
 
 
 
+      subroutine generation_report
+            if ( FDE_generator_report_flag ) then
+               write(*,'(/,3x,A,5x,F3.1)' ) 'D_eff:' , Fractal_Dimension
+               write(*,'(3x,A,1x,i7    )' ) 'N_eff:' , N_points
+               write(*,'(3x,A,2x,i6,A  )' ) 'R_max:' , int(radius_limit) , ' Mpc'  !=- !write(*,'(3x,A,1x,E10.3 )' ) 'Radius:'       , radius_limit
+               !write(*,'(3x,A,1x,i7    )' ) 'N_p:  ' , final_counter
+               endif
+         end subroutine
+
+
+
    	subroutine Generate_Uniform_Catalog(path)
-         character(len) path
+         character(len) path ; integer j
 
-            write(*,*) 'GUC is started..'
-               inquire(file=path, exist=file_exists)
+            write(*,'(/,A)') 'GUC is started..'
 
+               inquire(file=slashfix(path), exist=file_exists)
             if ( file_exists .and. .not. sets_regenerating ) then
-               write(*,*) '   uniform set ',trim(path),' already exists'
+               !=- write(*,*) '   uniform set ',trim(path),' already exists'
                else
 
                   call FDE_seed_fix
 
+                  unit_4 = random_unit()
+
                   if (N_points<1) N_points=100
-                  open(N_points,file=path,status='replace')
-                     write(N_points,catalog_heads_format  ) (catalog_titles(j),j=1,N_col_std)
-                     write(N_points,catalog_heading_format) (catalog_titles(j),j=1,N_col_std)
+                  open(unit_4,file=slashfix(path),status='replace')
+                     write(unit_4,catalog_heads_format  ) (catalog_titles(j),j=1,N_col_std)
+                     write(unit_4,catalog_heading_format) (catalog_titles(j),j=1,N_col_std)
 
                      counter=0
                      do while ( counter < N_points )
@@ -101,54 +116,60 @@ module FDE_generators
                               abs_to_vis_mag  ( catalog_line( N_col_cat_M ) , catalog_line( N_col_cat_dl ) )
                            catalog_line( N_col_cat_rs ) = fun_from_R_to_z ( catalog_line( N_col_cat_dl ) )
 
-                           write( N_points , catalog_format ) ( catalog_line(j) , j=1,N_col_std )
+                           write( unit_4 , catalog_format ) ( catalog_line(j) , j=1,N_col_std )
                            counter=counter+1
 
                            endif
                         enddo
 
-                     close(N_points)
+                     close(unit_4)
                endif
 
-            write(*,*) 'GUC is complited'
+               call generation_report ; write(*,*) '  datafile: ' , trim(name(path))
+
+            write(*,'(/,A)') 'GUC is complited'
          end subroutine Generate_Uniform_Catalog
 
 
 
       subroutine Generate_Cyrle(norma)
-         real(8) norma
-            N_cyrle = 101
-            open(N_cyrle,file=cyrle_path,status='replace')
+         real(8) norma ; integer i
 
+            unit_cyrle = random_unit()
+            open(unit_cyrle,file=slashfix(cyrle_path),status='replace')
+
+               N_cyrle = 1d2
                do i=1,N_cyrle
                   alpha = pi*2/N_cyrle*i
                   x = dcos(alpha)*norma
                   y = dsin(alpha)*norma
-                  write(N_cyrle,*) x,y    !=-  write(*,*) pi*2,N_cyrle*i,alpha,x,y,norma    ;pause
+                  write(unit_cyrle,*) x,y    !=-  write(*,*) pi*2,N_cyrle*i,alpha,x,y,norma    ;pause
                end do
 
-               close(N_cyrle)
+               close(unit_cyrle)
       end subroutine
 
 
 
       subroutine Generate_Cantor_Catalog(path) !=- Cantor Sets Generator
-         character(len) path
+         character(len) path ; integer i,j,k , ii,jj,kk
          integer(1),allocatable,dimension(:,:,:) :: cube
 
-            write(*,*) 'GCC is started..'
-               inquire(file=path, exist=file_exists)
+            write(*,'(/,A)') 'GCC is started..'
 
+               inquire(file=slashfix(path), exist=file_exists)
             if ( file_exists .and. .not. sets_regenerating ) then
-               write(*,*) '   cantor set ',trim(path),' already exists'
+               !=- write(*,*) '   cantor set ',trim(path),' already exists'
                else
 
                   call FDE_seed_fix
 
+                  unit_3 = random_unit()
+
                      if (N_points<1) N_points=100
-                  open(N_points,file=path,status='replace')
-                     write(N_points,catalog_heads_format  ) (catalog_titles(j),j=1,N_col_std)
-                     write(N_points,catalog_heading_format) (catalog_titles(j),j=1,N_col_std)
+                  open(unit_3,file=slashfix(path),status='replace')
+                     write(unit_3,catalog_heads_format  ) (catalog_titles(j),j=1,N_col_std)
+                     write(unit_3,catalog_heading_format) (catalog_titles(j),j=1,N_col_std)
 
                         if ( Fractal_Dimension < 1 ) Fractal_Dimension = 3
                         if ( uniform_approach_parameter<=0) uniform_approach_parameter=1
@@ -213,7 +234,7 @@ module FDE_generators
                               endif
                            endif
                         enddo ; enddo ; enddo
-                        write(N_points,'("# an initial count of points ",i7)') counter
+                        write(unit_3,'("# an initial count of points ",i7)') counter
 
                      final_counter=0
                      do ii=1,fractionality ; do jj=1,fractionality ; do kk=1,fractionality
@@ -239,7 +260,7 @@ module FDE_generators
                               catalog_line( N_col_cat_rs ) = fun_from_R_to_z ( catalog_line( N_col_cat_dl ) )
 
                               final_counter=final_counter+1
-                              write( N_points , catalog_format ) ( catalog_line(j) , j=1,N_col_std )
+                              write( unit_3 , catalog_format ) ( catalog_line(j) , j=1,N_col_std )
 
                               endif
                            end if
@@ -247,11 +268,13 @@ module FDE_generators
 
                      if (final_counter==0) write(*,*) 'GCC: 0 points' !=- need error fix
 
-                     close(N_points)
+                     close(unit_3)
                      deallocate(cube)
                endif
 
-            write(*,*) 'GCC is complited'
+               call generation_report ; write(*,*) '  datafile: ' , trim(name(path))
+
+            write(*,'(/,A)') 'GCC is complited'
          end subroutine Generate_Cantor_Catalog
 
 
