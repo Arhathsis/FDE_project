@@ -1,5 +1,5 @@
 !=- fortran-libraries
-!=- © Stanislav Shirokov, 2014-2020
+!=- Â© Stanislav Shirokov, 2014-2020
 
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
 	module cosmology
@@ -11,16 +11,18 @@
 
 		integer,parameter :: N_models = 9   , &
                   N_RDR_grid        = 2d3 , &   !=- graph grid
-                  N_RDR_grid_mode   = 3         !=- progression power
+                  N_RDR_grid_mode   = 3   , &   !=- progression power
+
+                  MS_grid           = 2d2 , &
+                  MS_model_count    = 1d2
 
 		integer ::  N_grid            = 2d2 , &
 
-                  RDR_z_max         = 2d1 , &
-                  RDR_type          = 1      !=- 0 is LCDM(0.3,70) , 1 is LCDM(\O_m,H_0) , 2 is wCDM(w,\O_m,H_0,O_k)
-
+                  RDR_type          = 1   , &   !=- 0 is LCDM(0.3,70) , 1 is LCDM(\O_m,H_0) , 2 is wCDM(w,\O_m,H_0,O_k)
+                  MS_real_model_count
 
 		real(8) ::	c   = 2.99792458d10	, &	!=- cm/s
-						H_0 = 70d0         , &	!=- km/s/Mpc
+						H_0 = 70d0           , &	!=- km/s/Mpc
 						H70 = 7d1            , &
 						dl  = 4421.71767d0   , &	!=- c/H_0/1d5 in GCS
 
@@ -32,22 +34,263 @@
 						O_w = 1d0				, &
 						O_k = 0d0            , &
 					 z_max = 2d1				, &
+             MS_z_max = 2d1            , &
+            RDR_z_max = 2d1            , &
+
 					 O_3	 = 0.3d0				, &
-					 O_7	 = 0.7d0
+					 O_7	 = 0.7d0          , &
 
+					 MS_H_0 , MS_O_v , MS_O_k , MS_w , MS_O_m_bug
 
-		real(8) :: LumDist(N_models) = 1d0, MetrDist(N_models)= 1d0, DistMod(N_models)= 1d0, & !=- z for FCM > 0.0025
-			dz, x_max, I1, RDR(2,N_RDR_grid)
+      character(len) :: model_set (MS_model_count,2) = ' model ' , &
+                        model_set_path = 'model_set.dat' , model_name , MS_columns(3)='' , &
+                        MS_fields(30) , MS_parameters(30)
+
+		real(8) ::  LumDist(N_models) = 1d0, MetrDist(N_models)= 1d0, DistMod(N_models)= 1d0, & !=- z for FCM > 0.0025
+                  dz, x_max, I1, RDR(2,N_RDR_grid), &
+
+                  MS_table ( 1+3*MS_model_count , MS_grid ) = 0d0
 
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
 		contains
 
+
+         subroutine make_model_set
+
+            !=-   write(*,*) ' the model_set format:'
+            !=-   write(*,*) ' wCDM H_0  w  Omega_v  Omega_k'
+            !=-   write(*,*) ' FF H_0'
+            !=-   write(*,*) ' TL H_0'
+
+               model_set ( 1 , 1 ) = ' wCDM  70    -1 0.7   0.0 '
+               model_set ( 1 , 2 ) = ' the standard LCDM model '
+
+               model_set ( 2 , 1 ) = ' wCDM  38.4  -1 0.15  -0.15 '
+               model_set ( 2 , 2 ) = ' the dVMS model '
+
+               model_set ( 3 , 1 ) = ' wCDM  70    -1 1.0   0.0 '
+               model_set ( 3 , 2 ) = ' the PV model '
+
+               !model_set ( 7 , 1 ) = ' TL    70     '
+               !model_set ( 7 , 2 ) = ' the TL model '
+
+               !model_set ( 6 , 1 ) = ' wCDM  70    -1 0.8   0.0 '
+               !model_set ( 6 , 2 ) = ' the LCDM {/Symbol W}_{/Symbol L} = 0.8 model '
+
+               model_set ( 4 , 1 ) = ' wCDM  70    -1 0.9   0.0 '
+               model_set ( 4 , 2 ) = ' the LCDM {/Symbol W}_{/Symbol L} = 0.9 model '
+
+               model_set ( 5 , 1 ) = ' FF  70    -1 0.9   0.0 '
+               model_set ( 5 , 2 ) = ' the FF model '
+
+               call compute_model_set
+               call write_model_set
+               call plot_model_set
+
+               end subroutine make_model_set
+
+
+
+         subroutine compute_model_set
+            integer i,j ; MS_table(:,:)=0d0
+
+               inquire( file = model_set_path , exist = file_exists )
+
+         if (.not. file_exists ) then
+
+               do i=1,MS_model_count
+
+                     read(model_set(i,1),*) model_name
+                  if ( model_name /= 'model' ) then
+
+                        do j=1,MS_grid
+
+                           if (i==1) MS_table ( 1 , j ) = MS_z_max / MS_grid**2 * j**2 !(i+0.01d0)
+
+                              select case (model_name)
+
+                                 case('wCDM')
+
+                                     MS_H_0 = 0d0 ; MS_w=0d0 ; MS_O_v=0d0 ; MS_O_k=0d0
+                                    read(model_set(i,1),*) model_name , MS_H_0 , MS_w , MS_O_v , MS_O_k
+
+                                    MS_O_m_bug = 1 + MS_O_k - MS_O_v !=-   the Friedmann equation
+                           !write(*,*) 'MS_compute: Omega_m = ', MS_O_m_bug
+                                    MS_table ( 2+3*(i-1) , j ) =  &
+                                        r_wCDM( MS_table ( 1 , j ) , MS_H_0 , MS_w , MS_O_m_bug , MS_O_k )
+                                    MS_table ( 3+3*(i-1) , j ) =  &
+                                        d_wCDM( MS_table ( 1 , j ) , MS_H_0 , MS_w , MS_O_m_bug , MS_O_k )
+                                    MS_table ( 4+3*(i-1) , j ) =  &
+                                       dm_wCDM( MS_table ( 1 , j ) , MS_H_0 , MS_w , MS_O_m_bug , MS_O_k )
+
+                                 case('FF')
+                                    read(model_set(i,1),*) model_name , MS_H_0
+
+                                    MS_table ( 2+3*(i-1) , j ) =  &
+                                        r_FCM( MS_table ( 1 , j ) , MS_H_0 )
+                                    MS_table ( 3+3*(i-1) , j ) =  &
+                                        d_FCM( MS_table ( 1 , j ) , MS_H_0 )
+                                    MS_table ( 4+3*(i-1) , j ) =  &
+                                       dm_FCM( MS_table ( 1 , j ) , MS_H_0 )
+
+                                 case('TL')
+                                    read(model_set(i,1),*) model_name , MS_H_0
+
+                                    MS_table ( 2+3*(i-1) , j ) =  &
+                                        r_TL( MS_table ( 1 , j ) , MS_H_0 )
+                                    MS_table ( 3+3*(i-1) , j ) =  &
+                                        d_TL( MS_table ( 1 , j ) , MS_H_0 )
+                                    MS_table ( 4+3*(i-1) , j ) =  &
+                                       dm_TL( MS_table ( 1 , j ) , MS_H_0 )
+
+                                 case default
+                                    write(*,*) 'MS_compute: unknown model mask: ' // trim(model_name)
+                                 end select
+
+                           enddo
+                     else
+                        MS_real_model_count = i-1
+                        write(*,*) 'MS_compute: model_count = ', MS_real_model_count
+                        exit
+                     end if
+
+                  end do
+            endif
+            end subroutine compute_model_set
+
+
+
+         subroutine write_model_set
+            integer i
+            character(len) title(MS_real_model_count)
+
+               inquire( file = model_set_path , exist = file_exists )
+
+         if (MS_model_count>0 .and. .not. file_exists ) then
+
+            MS_columns(1) = ':metric_r'
+            MS_columns(2) = ':luminosity_d_L'
+            MS_columns(3) = ':distance_modulus'
+
+            open(unit_1,file=model_set_path,status='replace')
+
+               line=' '
+               do i=1,MS_real_model_count
+                  if (i>9) line=''
+                  title(i) = 'model-' // trim(adjustl(inttostr(i))) // ': ' // trim(line) // trim(model_set(i,2))
+                  write(unit_1,'(A2,A200)') '# ' , title(i)
+                  end do
+
+               theformat = '' ; theformat = '(A2,A23,' // trim(adjustl(inttostr(1+3*MS_real_model_count))) // &
+                  '(A10,A10))'
+               write(unit_1,theformat) '# ',' ', &
+                  ( title(i),' ',title(i),' ',title(i),' ',i=1,MS_real_model_count )
+
+               theformat = '' ; theformat = '(A2,A15,A8,' // trim(adjustl(inttostr(1+3*MS_real_model_count))) // '(i3,A17))'
+               write(unit_1,theformat) '# ','1:redshift',' ',( 1+i,MS_columns(fix_index(i,3)),i=1,3*MS_real_model_count )
+
+               theformat = '' ; theformat = '(' // trim(adjustl(inttostr(1+3*MS_real_model_count))) // '(E20.8))'
+               write(unit_1,theformat) MS_table(1:1+3*MS_real_model_count,:)
+
+               close(unit_1)
+               else
+                  if ( MS_model_count==0 ) write(*,*) 'MS: critical error'
+            endif
+            end subroutine write_model_set
+
+
+
+         integer function fix_index( in_index , max_border )
+            integer in_index , out_index , max_border
+            out_index = in_index
+            do while ( out_index > max_border )
+               out_index = out_index - max_border
+               enddo
+               fix_index = out_index
+            end function fix_index
+
+
+
+         subroutine plot_model_set
+            integer i,j,k
+               call clear_plot_fields
+
+               GNUfields(logscale)  =  'set logscale'
+               GNUfields(format_y)  =  'set format y "10^{%L}"'
+               GNUfields(xrange)    =  'set xrange [0.01:*]'
+
+               GNUfields(legend)    =  'set key right bottom'
+               GNUfields(xlabel)    =  'set xlabel "redshift z"'
+
+               MS_fields(1) = 'r(z), [Mpc]'
+               MS_fields(2) = 'd_L(z), [Mpc]'
+               MS_fields(3) = '{/Symbol m}(z)'
+
+               MS_fields(4) = 'log10 r(z)/r_{model-1}(z)'
+               MS_fields(5) = 'log10 d_L(z)/d_{L,model-1}(z)'
+               MS_fields(6) = 'log10 {/Symbol m}(z) - mu_{model-1}(z)'
+
+               MS_fields(7) = 'log10 {/Symbol D}r(z)'
+               MS_fields(8) = 'log10 {/Symbol D}d_L(z)'
+               MS_fields(9) = 'log10 {/Symbol D}{/Symbol m}(z)'
+
+               MS_fields(10) = 'r(z)'
+               MS_fields(11) = 'd_L(z)'
+               MS_fields(12) = 'mu(z)'
+
+               MS_fields(13) = 'delta_r(z)'
+               MS_fields(14) = 'delta_d_L(z)'
+               MS_fields(15) = 'delta_mu(z)'
+
+               do k=1,2
+                  do j=1,3
+
+                     GNUfields(title)  = 'set title "'// trim(MS_fields(j+6*(k-1))) //' for different models"'
+
+                     if (j==3 .and. k/=2) then
+                        GNUfields(logscale)  = '#set logscale'
+                        GNUfields(format_y)  = '#set format y "10^{%L}"'
+                        endif
+
+                     do i=1,MS_real_model_count
+                        select case (k)
+                           case (1)
+                              GNUfields(ylabel) = 'set ylabel "' // trim(MS_fields(j+6*(k-1))) // '"'
+
+                              GNUfields (plot1+(i-1)*2) = ', "' // trim(slashfix(model_set_path)) // &
+                                 '" u 1:' // trim(inttostr(1+j+3*(i-1))) // ' w l ls ' // trim(inttostr(i))
+                              GNUfields (title1+(i-1)*2) = ' title "' // trim( model_set (i,2) ) // '"'
+                           case(2)
+                              GNUfields(yrange) =  'set yrange [-0.5:1]'
+                              if (j==3) GNUfields(yrange) =  'set yrange [-0.025:0.05]'
+
+                              GNUfields(ylabel) = 'set ylabel "' // trim(MS_fields(j+6*(k-1))) // ' = ' // &
+                                 trim(MS_fields(j+3*(k-1))) // '"'
+
+                              GNUfields (plot1+(i-1)*2) = ', "' // trim(slashfix(model_set_path)) // &
+                                 '" u 1:(log10($' // trim(inttostr(1+j+3*(i-1))) // '/$' // &
+                                 trim(inttostr(1+j)) // ')) w l ls ' // trim(inttostr(i))
+                              GNUfields (title1+(i-1)*2) = ' title "' // trim( model_set (i,2) ) // '"'
+                           end select
+                        end do
+                     GNUfields (plot1) = GNUfields (plot1)(2:len)
+
+                     !graph_name = MS_fields(j+9+3*(k-1)) // '-logscale'
+                     !   GNUfields(extention_out_figure)='#eps' ; call plot(model_set_path)
+                     graph_name = MS_fields(j+9+3*(k-1)) // '-logscale'
+                        GNUfields(extention_out_figure)='#png' ; call plot(model_set_path)
+                     enddo
+                  enddo
+            end subroutine plot_model_set
+
+
+
       subroutine redshift_distance_relation  !=- RDR( redshift , luminosity distance )
          if (RDR_calculating) then
             do i=1,N_RDR_grid
-               z = z_max**(1d0/N_RDR_grid_mode)/N_grid * i ; z = z**N_RDR_grid_mode
+               z = z_max**(1d0/N_RDR_grid_mode)/N_RDR_grid * i ; z = z**N_RDR_grid_mode
                RDR(1,i) = z
-               RDR(2,i) = fun_from_z_to_R(z)
+               RDR(2,i) = fun_from_z_to_R(z,H_0)
                end do
                RDR_calculating = .false.
             endif
@@ -61,15 +304,15 @@
                end do
 			end function
 
-		real(8) function fun_from_z_to_R(redshift)
-			real(8) redshift ; fun_from_z_to_R = 0d0
+		real(8) function fun_from_z_to_R(redshift,H0)
+			real(8) redshift,H0 ; fun_from_z_to_R = 0d0
             select case (RDR_type)
                   case(0)
-                     fun_from_z_to_R = D_wCDM(redshift,-1d0,O_3,0d0)    !=- LCDM(0.3,0.7,H_0)
+                     fun_from_z_to_R = D_wCDM(redshift,H0,-1d0,O_3,0d0)    !=- LCDM(0.3,0.7,H_0)
                   case(1)
-                     fun_from_z_to_R = D_wCDM(redshift,-1d0,O_m,0d0)    !=- LCDM(\O_m,H_0)
+                     fun_from_z_to_R = D_wCDM(redshift,H0,-1d0,O_m,0d0)    !=- LCDM(\O_m,H_0)
                   case(2)
-                     fun_from_z_to_R = D_wCDM(redshift,w,O_m,O_k)       !=- wCDM()
+                     fun_from_z_to_R = D_wCDM(redshift,H0,w,O_m,O_k)       !=- wCDM()
                   case default
                      if (RDR_error) write(*,*) ' do need choose the redshift-distance type '
                end select
@@ -100,34 +343,34 @@
 
 			!-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=!
 			!real(8) function R_LCDM(z)			; real(8) z 		; R_LCDM  = dl * IntHwCDM(z,-1d0,O_m,0d0)	;	end function
-			real(8) function R_LCDM(z)					; real(8) z 			; R_LCDM  = c/H_0/1d5 * IntHwCDM(z,-1d0,O_3,0d0)		;	end function
-			real(8) function R_PV(z)					; real(8) z 			; R_PV    = c/H_0/1d5 * IntHwCDM(z,-1d0,0d0,0d0)		;	end function
-			real(8) function R_EdeS(z)					; real(8) z 			; R_EdeS  = c/H_0/1d5 * IntHwCDM(z,-1d0,1d0,0d0) 	;	end function
-			real(8) function R_wCDM(z,w,O_m,O_k)	; real(8) z,w,O_m,O_k; R_wCDM  = c/H_0/1d5 * RzwCDM(z,w,O_m,O_k)			;	end function
-			real(8) function R_CSS(z)					; real(8) z 			; R_CSS   = c/H_0/1d5 * z									;	end function
-			real(8) function R_TL(z)					; real(8) z 			; R_TL    = c/H_0/1d5 * log(1d0+z)		 				;	end function
-			real(8) function R_FCM(z)					; real(8) z 			; R_FCM   = c/H_0/1d5 * YW(z) 								;	end function
-			real(8) function R_MM(z)					; real(8) z 			; R_MM    = c/H_0/1d5 * log(1d0+z) 						;	end function
+   real(8) function R_LCDM(z,H0)			      ; real(8) z,H0 			; R_LCDM  = c/H0/1d5 * IntHwCDM(z,-1d0,O_3,0d0)	;	end function
+   real(8) function R_PV(z,H0)					; real(8) z,H0 			; R_PV    = c/H0/1d5 * IntHwCDM(z,-1d0,0d0,0d0)	;	end function
+   real(8) function R_EdeS(z,H0)				   ; real(8) z,H0 			; R_EdeS  = c/H0/1d5 * IntHwCDM(z,-1d0,1d0,0d0) ;	end function
+   real(8) function R_wCDM(z,H0,w,Om,Ok)  	; real(8) z,H0,w,Om,Ok  ; R_wCDM  = c/H0/1d5 * RzwCDM(z,w,Om,Ok)	      ;	end function
+   real(8) function R_CSS(z,H0)					; real(8) z,H0 			; R_CSS   = c/H0/1d5 * z								;	end function
+   real(8) function R_TL(z,H0)					; real(8) z,H0 			; R_TL    = c/H0/1d5 * log(1d0+z)		 			;	end function
+   real(8) function R_FCM(z,H0)					; real(8) z,H0 			; R_FCM   = c/H0/1d5 * YW(z) 						   ;	end function
+   real(8) function R_MM(z,H0)					; real(8) z,H0 			; R_MM    = c/H0/1d5 * log(1d0+z) 					;	end function
 			!-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=!
-			real(8) function D_LCDM(z)					; real(8) z		 		; D_LCDM  = (1d0+z)		* R_LCDM(z) 			;	end function
-			real(8) function D_PV(z)					; real(8) z		 		; D_PV    = (1d0+z)		* R_PV(z) 				;	end function
-			real(8) function D_EdeS(z)					; real(8) z		 		; D_EdeS	 = (1d0+z) 		* R_EdeS(z) 			;	end function
-			real(8) function D_wCDM(z,w,O_m,O_k)	; real(8) z,w,O_m,O_k; D_wCDM	 = (1d0+z) 		* R_wCDM(z,w,O_m,O_k);	end function
-			real(8) function D_CSS(z)					; real(8) z		 		; D_CSS   = (1d0+z)		* R_CSS(z) 				;	end function
-			real(8) function D_TL(z)					; real(8) z				; D_TL  	 = dsqrt(1d0+z)* R_TL(z) 				;	end function
-			real(8) function D_FCM(z)					; real(8) z				; D_FCM 	 = (1d0+z) 		* R_FCM(z) 				;	end function
-			real(8) function D_MM(z)					; real(8) z				; D_MM  	 = (1d0+z) 		* R_MM(z) 				;	end function
+   real(8) function D_LCDM(z,H0)					; real(8) z,H0		 		; D_LCDM  = (1d0+z)		* R_LCDM(z,H0) 			;	end function
+   real(8) function D_PV(z,H0)					; real(8) z,H0		 		; D_PV    = (1d0+z)		* R_PV(z,H0) 				;	end function
+   real(8) function D_EdeS(z,H0)					; real(8) z,H0		 		; D_EdeS	 = (1d0+z) 		* R_EdeS(z,H0) 			;	end function
+   real(8) function D_wCDM(z,H0,w,Om,Ok)  	; real(8) z,H0,w,Om,Ok  ; D_wCDM	 = (1d0+z) 		* R_wCDM(z,H0,w,Om,Ok)  ;	end function
+   real(8) function D_CSS(z,H0)					; real(8) z,H0	 		   ; D_CSS   = (1d0+z)		* R_CSS(z,H0) 				;	end function
+   real(8) function D_TL(z,H0)					; real(8) z,H0				; D_TL  	 = dsqrt(1d0+z)* R_TL(z,H0) 				;	end function
+   real(8) function D_FCM(z,H0)					; real(8) z,H0				; D_FCM 	 = (1d0+z) 		* R_FCM(z,H0) 				;	end function
+   real(8) function D_MM(z,H0)					; real(8) z,H0				; D_MM  	 = (1d0+z) 		* R_MM(z,H0) 				;	end function
 			!-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=!
-			real(8) function mu(dL)						; real(8) dL 			; mu		 = 25d0+5d0*log10(dL)					;	end function
+   real(8) function mu(dL)						   ; real(8) dL 		   	; mu		 = 25d0+5d0*log10(dL)					   ;	end function
 			!-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=!
-			real(8) function dm_LCDM(z)				; real(8) z		 		; dm_LCDM = mu( D_LCDM(z)			)				;	end function
-			real(8) function dm_PV(z)					; real(8) z		 		; dm_PV	 = mu( D_PV(z)				)				;	end function
-			real(8) function dm_EdeS(z)				; real(8) z 			; dm_EdeS = mu( D_EdeS(z)			)				;	end function
-			real(8) function dm_wCDM(z,w,O_m,O_k)	; real(8) z,w,O_m,O_k; dm_wCDM = mu( D_wCDM(z,w,O_m,O_k)	)			;	end function
-			real(8) function dm_CSS(z)					; real(8) z		 		; dm_CSS	 = mu( D_CSS(z)			)				;	end function
-			real(8) function dm_TL(z)					; real(8) z		 		; dm_TL	 = mu( D_TL(z)				)				;	end function
-			real(8) function dm_FCM(z)					; real(8) z		 		; dm_FCM	 = mu( D_FCM(z)			)				;	end function
-			real(8) function dm_MM(z)					; real(8) z		 		; dm_MM	 = mu( D_MM(z)				)				;	end function
+   real(8) function dm_LCDM(z,H0)				; real(8) z,H0	 		   ; dm_LCDM = mu( D_LCDM(z,H0)			)		      ;	end function
+   real(8) function dm_PV(z,H0)					; real(8) z,H0		 		; dm_PV	 = mu( D_PV(z,H0)				)		      ;	end function
+   real(8) function dm_EdeS(z,H0)			   ; real(8) z,H0 			; dm_EdeS = mu( D_EdeS(z,H0)			)		      ;	end function
+   real(8) function dm_wCDM(z,H0,w,Om,Ok)	   ; real(8) z,H0,w,Om,Ok  ; dm_wCDM = mu( D_wCDM(z,H0,w,Om,Ok))  	      ;	end function
+   real(8) function dm_CSS(z,H0)					; real(8) z,H0		 		; dm_CSS	 = mu( D_CSS(z,H0)			)		      ;	end function
+   real(8) function dm_TL(z,H0)					; real(8) z,H0		 		; dm_TL	 = mu( D_TL(z,H0)				)		      ;	end function
+   real(8) function dm_FCM(z,H0)					; real(8) z,H0		 		; dm_FCM	 = mu( D_FCM(z,H0)			)		      ;	end function
+   real(8) function dm_MM(z,H0)					; real(8) z,H0		 		; dm_MM	 = mu( D_MM(z,H0)				)		      ;	end function
 			!-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=!
 
 			real(8) function YW(z)
@@ -163,30 +406,33 @@
 						endif
 				end function
 
-			real(8) function IntHwCDM(z,w,O_m,O_k)
-				real(8) z,w,O_m,O_k
+			real(8) function IntHwCDM(z,w,Om,Ok)
+            integer i,N
+				real(8) z,w,Om,Ok,Ow
 					E=1d0; N=1d4 ; IntHwCDM=0d0 ;  	!= N=1d4 +- 1Mpc =1
 
 					if (z.ne.0) then
-						dz = z/N ; O_w = 1d0 - O_m + O_k;
-						do iii=1,N ; t = dz*(iii-0.5d0) + 1d0
-							if (O_m.ne.1d0) E=( O_w*t**( 3d0 + w*3d0 ) + O_m*t*t*t - O_k*t*t )**0.5d0	!
+						dz = z/N ; Ow = 1d0 - Om + Ok;
+						do i=1,N ; t = dz*(i-0.5d0) + 1d0
+							!if (Om.ne.1d0)
+							E=( Ow*t**( 3d0 + w*3d0 ) + Om*t*t*t - Ok*t*t )**0.5d0	!
 							IntHwCDM = IntHwCDM + dz/E
 							enddo
 						endif
 					end function IntHwCDM
 
-			real(8) function RzwCDM(z,w,O_m,O_k)
-				real(8) z,w,O_m,O_k
+			real(8) function RzwCDM(z,w,Om,Ok)
+				real(8) z,w,Om,Ok
+
 					RzwCDM=0d0 ; N=1d4	!=- N=1d4 +- 1Mpc
 
-					if ( O_k == 0d0 ) then
-						RzwCDM = IntHwCDM(z,w,O_m,O_k);
+					if ( Ok == 0d0 ) then
+						RzwCDM = IntHwCDM(z,w,Om,Ok);
 						else
-							if (O_k > 0d0) then
-								RzwCDM = dsin( dabs(O_k)**0.5d0 * IntHwCDM(z,w,O_m,O_k)  ) / dabs(O_k)**0.5d0
+							if (Ok > 0d0) then
+								RzwCDM = dsin( dabs(Ok)**0.5d0 * IntHwCDM(z,w,Om,Ok)  ) / dabs(Ok)**0.5d0
 								else
-									RzwCDM = dsinh( dabs(O_k)**0.5d0 * IntHwCDM(z,w,O_m,O_k)  ) / dabs(O_k)**0.5d0
+									RzwCDM = dsinh( dabs(Ok)**0.5d0 * IntHwCDM(z,w,Om,Ok)  ) / dabs(Ok)**0.5d0
 								end if
 						end if
 				end function RzwCDM
@@ -243,25 +489,25 @@
 							z = dsqrt(z_max)/N_grid * i!(i+0.01d0)
 							z = z*z
 
-							LumDist(1)	= d_LCDM(z)					         ; MetrDist(1)	= r_LCDM(z)
-							LumDist(2)	= d_CSS(z)					         ; MetrDist(2)	= r_CSS(z)
-							LumDist(3)	= d_TL(z)					         ; MetrDist(3)	= r_TL(z)
-							LumDist(4)	= d_FCM(z)					         ; MetrDist(4)	= r_FCM(z)
-							LumDist(5)	= d_MM(z)					         ; MetrDist(5)	= r_MM(z)
-							LumDist(6)	= d_wCDM(z,-1.0d0,0.85d0, 0.0d0)	; MetrDist(6)	= r_wCDM(z,-1.0d0,0.85d0, 0.0d0)
-							LumDist(7)	= d_wCDM(z,-1.0d0,0.20d0, 0.0d0)	; MetrDist(7)	= r_wCDM(z,-1.0d0,0.20d0, 0.0d0)
-							LumDist(8)	= d_wCDM(z,-1.0d0,0.1d0, 0.0d0)	; MetrDist(8)	= r_wCDM(z,-1.0d0,0.1d0, 0.0d0)
-							LumDist(9)	= d_wCDM(z,-0.5d0,0.5d0, 0.2d0)	; MetrDist(9)	= r_wCDM(z,-0.5d0,0.5d0, 0.2d0)
+							LumDist(1)	= d_LCDM (z,H_0)					         ; MetrDist(1)	= r_LCDM (z,H_0)
+							LumDist(2)	= d_CSS  (z,H_0)					         ; MetrDist(2)	= r_CSS  (z,H_0)
+							LumDist(3)	= d_TL   (z,H_0)					         ; MetrDist(3)	= r_TL   (z,H_0)
+							LumDist(4)	= d_FCM  (z,H_0)					         ; MetrDist(4)	= r_FCM  (z,H_0)
+							LumDist(5)	= d_MM   (z,H_0)					         ; MetrDist(5)	= r_MM   (z,H_0)
+							LumDist(6)	= d_wCDM (z,H_0,-1.0d0,0.85d0, 0.0d0)	; MetrDist(6)	= r_wCDM (z,H_0,-1.0d0,0.85d0, 0.0d0)
+							LumDist(7)	= d_wCDM (z,H_0,-1.0d0,0.20d0, 0.0d0)	; MetrDist(7)	= r_wCDM (z,H_0,-1.0d0,0.20d0, 0.0d0)
+							LumDist(8)	= d_wCDM (z,H_0,-1.0d0,0.1d0, 0.0d0)	; MetrDist(8)	= r_wCDM (z,H_0,-1.0d0,0.1d0, 0.0d0)
+							LumDist(9)	= d_wCDM (z,H_0,-0.5d0,0.5d0, 0.2d0)	; MetrDist(9)	= r_wCDM (z,H_0,-0.5d0,0.5d0, 0.2d0)
 
-							DistMod(1) = dm_LCDM(z)
-							DistMod(2) = dm_CSS(z)
-							DistMod(3) = dm_TL(z)
-							DistMod(4) = dm_FCM(z)
-							DistMod(5) = dm_MM(z)
-							DistMod(6) = dm_wCDM(z,-1.0d0,0.85d0, 0.0d0)
-							DistMod(7) = dm_wCDM(z,-1.0d0,0.20d0, 0.0d0)
-							DistMod(8) = dm_wCDM(z,-1.0d0,0.1d0, 0.0d0)
-							DistMod(9) = dm_wCDM(z,-0.5d0,0.5d0, 0.2d0)
+							DistMod(1) = dm_LCDM (z,H_0)
+							DistMod(2) = dm_CSS  (z,H_0)
+							DistMod(3) = dm_TL   (z,H_0)
+							DistMod(4) = dm_FCM  (z,H_0)
+							DistMod(5) = dm_MM   (z,H_0)
+							DistMod(6) = dm_wCDM (z,H_0,-1.0d0,0.85d0, 0.0d0)
+							DistMod(7) = dm_wCDM (z,H_0,-1.0d0,0.20d0, 0.0d0)
+							DistMod(8) = dm_wCDM (z,H_0,-1.0d0,0.1d0, 0.0d0)
+							DistMod(9) = dm_wCDM (z,H_0,-0.5d0,0.5d0, 0.2d0)
 
 							do j=1,N_models;	if ( LumDist(j)==0)  LumDist(j)=1d0
 								if (MetrDist(j)==0) MetrDist(j)=1d0	;	end do
