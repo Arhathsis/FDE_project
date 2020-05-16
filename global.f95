@@ -5,6 +5,8 @@
 	module global
 		implicit none
 
+      integer ::  operating_system  =  0   !=- 1 Windows, 2 Linux
+
       logical :: file_exists
 
 		integer,parameter :: len=256,  N_col_GRB = 90, N_GRB=7d3, & !=- constants
@@ -17,10 +19,8 @@
 		character(len) :: theformat='', theformat2='', datafile='', titles(N_titles)='', &
                         input='', output='', line='',preformat='',path='',head_format='', &
                         text1='',text2='',text3='',text4='',text5='', command='',figure_number='', &
-                        files(N_files)='',new_files(N_files)='', folders(N_folders) , &
-
-                     !dir = 'D:\Arhath\YandexDisk\'          !=- D:\Arhath or C:\Users\
-                     dir = 'C:\Users\Arhath\YandexDisk\'   !=- Dell notebook
+                        files(N_files)='',new_files(N_files)='', folders(N_folders), &
+                        system_commands(10)
 
 		real(8) a,b,bbb,d,e,g,l,t,tx,ty,nx,ny,aa,bb,vva,vvb,q,p,sa,sb,ssa,ssb,sm, &
 			x,xx,xxx, y,yy,yyy, z,zz,zzz, w,ww,www, v,vv,vvv,r, maximum, &
@@ -32,17 +32,76 @@
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
 		contains
 
-         character(len) function make_workdir()
-            call system( 'echo %cd% > log.log' )
-            open(1,file='log.log',status='old')
-               read(1,*) line
-               close(1)
 
-               make_workdir=''
-               do i=1,len
-                  if (line(i:i)=='\') make_workdir = line(1:i)
-                  end do
+
+         subroutine define_system
+
+            call system(' echo %OS% > system.log')
+               line = read_last_string('system.log')
+               if ( line == 'Windows_NT' ) operating_system = 1
+
+            call system(' echo $SHELL  >> system.log')
+               line = read_last_string('system.log')
+               if ( line == '/bin/bash'  ) operating_system = 2
+
+            select case (operating_system)
+               case(1)  !=-   Windows
+                  write(*,*) 'OS: Windows_NT'
+                  call sleep (1)
+                  call system('cls')
+               case(2)  !=-   Linux
+                  write(*,*) 'OS: Linux'
+                  call sleep (1)
+                  !call system('clear')
+               case default   !=-   Other
+                  write(*,*) 'define_system: wrong mask'
+                  call sleep (10) ; operating_system = 1
+               end select
+            end subroutine define_system
+
+
+
+         integer function random_unit()
+            real(8) x
+               call random_number(x)
+               random_unit = int(1d3*x)
+            end function
+
+
+
+         character(len) function read_last_string(log_pathfile)
+            character(*) log_pathfile
+               read_last_string = ''
+                        unit_1 = random_unit()
+            open(       unit_1,file=log_pathfile,status='old',err=22)
+               do ; read(    unit_1,*,end=11) read_last_string ; enddo
+               22 continue ; write(*,*) 'error: read_last_string: file ',trim(log_pathfile),' does not exist'
+               11 continue ; close(   unit_1)
+            end function
+
+
+
+         character(len) function make_workdir()
+
+            select case (operating_system)
+               case(1)  !=-   Windows
+
+                  call system( 'echo %cd% > log.log' )
+                  line = read_last_string('log.log')
+                  make_workdir = file_path(line)
+
+               case(2)  !=-   Linux
+
+                  call system( 'echo $PWD > log.log' )
+                  line = read_last_string('log.log')
+                  make_workdir = file_path(line)
+
+               case default   !=-   Other
+                  write(*,*) 'fatal error: make_workdir: unknown mask'
+               end select
+
             end function make_workdir
+
 
 
          character(len) function name(path)
@@ -56,6 +115,7 @@
 				end subroutine file_name
 
 			character(len) function file_path(path) !-=- file name excision
+            integer i
 				character(len) path ; integer l1,l2
 					do i=len,1,-1 ; if (path(i:i)=='\'.or.path(i:i)=='/') then ; l1=i ; exit ; endif ; enddo
                file_path='' ; file_path = path(1:l1)
@@ -91,6 +151,7 @@
 
 			integer function file_volume(file_path)
 				character(len) file_path ; file_volume=0
+               unit_4 = random_unit()
 
                inquire( file = file_path , exist = file_exists )
 					if ( file_exists ) then
@@ -108,18 +169,75 @@
 
 
 			logical function symbol_search(line,symbol)
+            integer i
 				character(len) line ; character(1) symbol ; symbol_search = .false.
 					do i=1,len
 						if (line(i:i)==symbol) symbol_search = .true.
 						end do
 				end function
 
+			logical function word_search(line,goal)   !=- of only the first word - ?
+				character(len) word,line ; character(*) goal ; word_search = .false.
+               read(line,*) word
+               if (word==goal) word_search = .true.
+				end function
+
+
 
          subroutine shell_MD_Tree
+            integer i
                do i=1,size(folders(:))
-						if (folders(i).ne.'') call system( 'mkdir -p '// trim(folders(i)) )
+                  call create_folder(folders(i))
                   enddo
             end subroutine shell_MD_Tree
+
+
+
+         subroutine move_file(whence,here)
+            character(*) whence , here
+               select case (operating_system)
+                  case(1)  !=-   Windows
+                     whence = backslashfix(whence)
+                       here = backslashfix(here)
+                     if ( whence.ne.'' .and. here.ne.'' ) call system( 'move ' // trim(whence) // &
+                        ' ' // trim(here)  // ' >> log.log ' )
+                  case(2)  !=-   Linux
+                     whence = slashfix(whence)
+                       here = slashfix(here)
+                     if ( whence.ne.'' .and. here.ne.'' ) call system( 'mv ' // trim(whence) // &
+                        ' ' // trim(here)  // ' >> log.log ' )
+                  end select
+            end subroutine
+
+
+
+         subroutine create_folder(path_folder)
+            character(*) path_folder
+               select case (operating_system)
+                  case(1)  !=-   Windows
+                     path_folder = backslashfix(path_folder)
+                     if (path_folder.ne.'') call system( 'If Not Exist ' // trim(path_folder) // &
+                        ' MD ' // trim(path_folder)  // ' >> log.log ' )
+                  case(2)  !=-   Linux
+                     path_folder = slashfix(path_folder)
+                     if (path_folder.ne.'') call system( 'mkdir -p ' // trim(path_folder)  // ' >> log.log ' )
+                  end select
+            end subroutine
+
+
+
+			character(len) function slashfix(path)
+            integer i
+				character(len) path; slashfix = ''; slashfix = path
+					do i=len,1,-1 ; if (path(i:i)=='\') slashfix(i:i)='/' ; enddo
+				end function
+
+			character(len) function backslashfix(path)
+            integer i
+				character(len) path; backslashfix = ''; backslashfix = path
+					do i=len,1,-1 ; if (path(i:i)=='/') backslashfix(i:i)='\' ; enddo
+				end function
+
 
 
 		end module
