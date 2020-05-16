@@ -4,8 +4,7 @@
 module FDE_citadel
    use FDE_config
    use FDE_paths
-   use FDE_sqripts
-   use FDE_debug
+   use FDE_scripts
    use FDE_generators
 
    contains
@@ -14,22 +13,26 @@ module FDE_citadel
 
 				write(*,*) 'Fractal Dimension Estimation is runned' ; write(*,*)
 
+            call define_system
             call gen_paths
+            call shell_MD_Tree
             call the_catalog_heading
 
 			end subroutine
 
       subroutine opening !===============================================================================1
 
-				call preparation
+            22 continue
 
-call debug
+				call preparation
 
 				do ; write(*,*) '--'
 
 					read(*,*) command
 
 					select case (command)
+                  case ('reset')
+                     goto 22
 						case ('cg')
 							!call compaire_graphics
 						case ('exit')
