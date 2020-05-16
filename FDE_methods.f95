@@ -10,14 +10,17 @@
 		use FDE_config
 		use FDE_paths
 
-         logical :: FDE_data_files_existing = .false.
+         logical ::  FDE_data_files_existing = .false. , &
+                     FDE_method_report_flag  = .true.
 
          integer,parameter :: methods_count = 4 , geometries_count = 4 , FDE_out_table_size = 100
 
          character(len) :: NP_name = '_NP.dat' , MD_name = '_MD.dat' , diffCD_name = '_DiffCD.dat' , &
                            intCD_name = '_IntCD.dat' , FDE_data_file_path , FDE_data_format , &
                            FDE_NP_data_file_path , FDE_MD_data_file_path , FDE_IntCD_data_file_path , &
-                           FDE_DiffCD_data_file_path , FDE_data_files_paths(methods_count)
+                           FDE_DiffCD_data_file_path , FDE_data_files_paths(methods_count) , &
+
+                           FDE_method_names(methods_count)
 
 			integer ::	FDE_points_amount , FDE_grid = 20 , k_NP(geometries_count) , geometry
 
@@ -47,11 +50,13 @@
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
 
 			subroutine catalog_loading( data_file_path , Sample )
-				character(len) data_file_path
+				character(len) data_file_path ; integer ii
 				real(8) Sample(:,:) ; Sample(:,:)=0d0
 
+               unit_1 = random_unit()
+
                theformat='' ; theformat='(A'//trim(inttostr(len))//')'
-					open(unit_1,file=trim(data_file_path),status='old',err=11)  !=-
+					open(unit_1,file=data_file_path,status='old',err=11)  !=-
 
 					ii=0
                do  													!=- size()
@@ -106,6 +111,7 @@
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
 
          subroutine check_FDE_data_files_existing
+            integer i
             FDE_data_files_existing = .true.
             do i=1,methods_count
                inquire( file = FDE_data_files_paths(i) , exist = file_exists )
@@ -115,10 +121,21 @@
 
 
 
-			subroutine FDE_complex( data_file_path )
-				character(len) data_file_path ; integer i , j , k , ii , jj , kk
+         subroutine FDE_name_methods
+            FDE_method_names(1) = '1-NEAREST NEIGHBORS ALGORITHM'
+            FDE_method_names(2) = 'MUTUAL DISTANCES ALGORITHM'
+            FDE_method_names(3) = 'INTEGRAL CONDITIONAL DENSITY ALGORITHM'
+            FDE_method_names(4) = 'DIFFERENCIAL CONDITIONAL DENSITY ALGORITHM'
+            end subroutine
 
-					write(*,*) 'FDE-method is started..'
+
+
+			subroutine FDE_complex( data_file_path )
+				character(len) data_file_path ; integer i,j,k , ii,jj,kk
+
+					write(*,'(/,A)') 'FDE-method is started..'
+
+               call FDE_name_methods
 
                FDE_data_file_path = name(data_file_path)
                FDE_data_format = '(' // trim(inttostr(2*geometries_count+1)) // '(E16.8))'
@@ -251,12 +268,12 @@
                 Dispersion_NP , Dispersion_MD , Dispersion_intCD , Dispersion_diffCD )
             deallocate( FDE_NP , FDE_MD , FDE_diffCD , working_volumes ) !=- Exception: Access Violation
                else
-                  write(*,*) '   FDE_complex: all data files already exist'
+                  write(*,'(/,A)') '   FDE_complex: all data files already exist'
             endif
 
             call FDE_export
 
-				write(*,*) 'FDE-method is complited'
+				write(*,'(/,A)') 'FDE-method is complited'
 
 				end subroutine FDE_complex
 
@@ -285,9 +302,25 @@
             end subroutine FDE_compute_dispersion
 
 
+
          subroutine FDE_export
+            integer i , method
 
                call FDE_read_R_nn
+
+               if ( FDE_method_report_flag ) then
+                  write(*,'(/,3x,A,i7)') 'm_grid: ' , FDE_grid
+                  write(*,'(3x,A,i7)'  ) 'N_p:    ' , FDE_points_amount
+
+                  write(*,'(3x,A,i1,A,A)') 'method_' , 1 , ': ' , trim(FDE_method_names(1))
+                  write(*,'(3x,A,i1,A,F8.2)') ( 'R_nn,' , i , ':' , R_nn(i) , i=1,geometries_count)
+
+                  do method = 2,methods_count
+                     call FDE_trend_log_xy( FDE_data_files_paths(method) )
+                     write(*,'(3x,A,i1,A,A)') 'method_' , method , ': ' , trim(FDE_method_names(method))
+                     write(*,'(3x,A,i1,A,F8.2)') ( 'D_e,' , i , ':' , FDE_LS_coefficients(i,1) , i=1,geometries_count )
+                     enddo
+                  end if
 
                FDE_out_NP(:,:)=0d0 ; FDE_out_MD(:,:)=0d0 ; FDE_out_intCD(:,:)=0d0 ; FDE_out_diffCD(:,:)=0d0
                call read_FDE_data_file(FDE_data_files_paths(1))
@@ -375,6 +408,8 @@
          subroutine writeNP
             integer i
 
+            unit_1 = random_unit()
+
             open(unit_1,file=FDE_NP_data_file_path,status='replace')
 
                do i=1,FDE_grid
@@ -392,6 +427,10 @@
 
 
          subroutine writeMD
+            integer i
+
+            unit_2 = random_unit()
+
             open(unit_2,file=FDE_MD_data_file_path,status='replace')
 
                do i=1,FDE_grid
@@ -409,6 +448,10 @@
 
 
          subroutine writeCD
+            integer i
+
+            unit_3 = random_unit()
+
             open(unit_3,file=FDE_IntCD_data_file_path,status='replace')
 
                do i=1,FDE_grid
@@ -421,6 +464,8 @@
                   enddo
 
                close(unit_3)
+
+            unit_4 = random_unit()
 
             open(unit_4,file=FDE_DiffCD_data_file_path,status='replace')
 
@@ -440,19 +485,21 @@
 
          subroutine read_FDE_data_file(data_file_path)
             character(len) data_file_path
-            integer :: i
-               open(200,file=data_file_path,status='old',err=22)
+            integer i
 
-                  write(*,*) 'file: ', data_file_path
+               unit_7 = random_unit()
+
+               open(unit_7,file=data_file_path,status='old',err=22)  !=- write(*,*) 'file: ', data_file_path
+
                   XYY(:,:) = 0d0
                   i = 1
                   do
-                     read(200,*,end=11) XYY(:,i)
+                     read(unit_7,*,end=11) XYY(:,i)
                      i = i + 1
                   enddo
 
-               22 continue ; write(*,*) 'no file'
-               11 continue ; close(200)
+               22 continue ; write(*,*) 'read_FDE_data_file: file "' // trim(data_file_path) // '" does not exist'
+               11 continue ; close(unit_7)
             end subroutine read_FDE_data_file
 
 
