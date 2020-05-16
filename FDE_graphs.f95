@@ -52,25 +52,25 @@ module FDE_graphs
             select case ( FDE_method_mask )
 
                case ('NP')
-                  GNUfields(ylabel)		=	'set ylabel "N_{ops}, ops -- one-point-spheres"'
-                  method_name = 'K-NEAREST NEIGHBORS ALGORITHM'
-                  y_axis_range = '[ 0.1*' // trim(realtostr(minval(FDE_out_NP(2,:) , FDE_out_NP(2,:) .ne. 0))) // &
-                     ' :10*' // trim(realtostr(maxval(FDE_out_NP(2,:) , FDE_out_NP(2,:) .ne. 0))) // ' ]'
+                  GNUfields(ylabel)		=	'N_{ops}, ops -- one-point-spheres'
+                  method_name = FDE_method_names(1) !=- 'K-NEAREST NEIGHBORS ALGORITHM'
+                  y_axis_range = '[ 0.1*' // trim(realtostrE(minval(FDE_out_NP(2,:) , FDE_out_NP(2,:) .ne. 0))) // &
+                     ' :10*' // trim(realtostrE(maxval(FDE_out_NP(2,:) , FDE_out_NP(2,:) .ne. 0))) // ' ]'
                case ('MD')
-                  GNUfields(ylabel)		=	'set ylabel "N_{segments}"'
-                  method_name = 'MUTUAL DISTANCES ALGORITHM'
+                  GNUfields(ylabel)		=	'N_{segments}'
+                  method_name = FDE_method_names(2) !=- 'MUTUAL DISTANCES ALGORITHM'
                   y_axis_range = '[ 0.1*' // trim(realtostrE(minval(FDE_out_MD(2,:) , FDE_out_MD(2,:) .ne. 0))) // &
                      ' :10*' // trim(realtostrE(maxval(FDE_out_MD(2,:) , FDE_out_MD(2,:) .ne. 0))) // ' ]'
                case ('IntCD')
-                  GNUfields(ylabel)		=	'set ylabel "CD_{integral}"'
-                  method_name = 'INTEGRAL CONDITIONAL DENSITY ALGORITHM'
-                  y_axis_range = '[ 0.1*' // trim(realtostr(minval(FDE_out_intCD(2,:) , FDE_out_intCD(2,:) .ne. 0))) // &
-                     ' :10*' // trim(realtostr(maxval(FDE_out_intCD(2,:) , FDE_out_intCD(2,:) .ne. 0))) // ' ]'
+                  GNUfields(ylabel)		=	'CD_{integral}'
+                  method_name = FDE_method_names(3) !=- 'INTEGRAL CONDITIONAL DENSITY ALGORITHM'
+                  y_axis_range = '[ 0.1*' // trim(realtostrE(minval(FDE_out_intCD(2,:) , FDE_out_intCD(2,:) .ne. 0))) // &
+                     ' :10*' // trim(realtostrE(maxval(FDE_out_intCD(2,:) , FDE_out_intCD(2,:) .ne. 0))) // ' ]'
                case ('DiffCD')
-                  GNUfields(ylabel)		=	'set ylabel "CD_{differential}"'
-                  method_name = 'DIFFERENCIAL CONDITIONAL DENSITY ALGORITHM'
-                  y_axis_range = '[ 0.1*' // trim(realtostr(minval(FDE_out_diffCD(2,:) , FDE_out_diffCD(2,:) .ne. 0))) // &
-                     ' :10*' // trim(realtostr(maxval(FDE_out_diffCD(2,:) , FDE_out_diffCD(2,:) .ne. 0))) // ' ]'
+                  GNUfields(ylabel)		=	'CD_{differential}'
+                  method_name = FDE_method_names(4) !=- 'DIFFERENCIAL CONDITIONAL DENSITY ALGORITHM'
+                  y_axis_range = '[ 0.1*' // trim(realtostrE(minval(FDE_out_diffCD(2,:) , FDE_out_diffCD(2,:) .ne. 0))) // &
+                     ' :10*' // trim(realtostrE(maxval(FDE_out_diffCD(2,:) , FDE_out_diffCD(2,:) .ne. 0))) // ' ]'
                case default
                   write(*,*) 'FDE_plot: unknown method mask'
                   write(*,*) trim(FDE_method_mask)
@@ -111,12 +111,12 @@ module FDE_graphs
 
 					GNUfields(logscale)	=	'set logscale'
                GNUfields(legend)    =  'set key bottom right'
-               GNUfields(grid)	=	'set grid xtics ytics mxtics mytics'
+               GNUfields(grid)	   =	'set grid xtics ytics mxtics mytics'
 
 					GNUfields(format_y)	=	'set format y "10^{%L}"'
 					GNUfields(format_x)	=	'#'
-					GNUfields(mxtics)		=	'set mxtics 10'
-					GNUfields(mytics)		=	'set mytics 10'
+					GNUfields(mxtics)		=	'10'
+					GNUfields(mytics)		=	'10'
 
                GNUfields(add3) = 'set trange ' // trim(y_axis_range)
                GNUfields(add4) = 'set yrange ' // trim(y_axis_range)
@@ -132,19 +132,18 @@ module FDE_graphs
                   ' \n the real parameters: N = ' // trim(adjustl(inttostr(FDE_points_amount))) // &
                      ', D = '//trim(realtostrf(FDE_LS_coefficients(geometry,1),5,2)) // &
                      ', R_{nn} = ' // trim(inttostr(int(R_nn(geometry)))) // ' Mpc \' !// &
-               GNUfields(1+title)	=	'\n the approximation borders: ' // trim(borders) // ' "'  !=-  noenhanced
-					GNUfields(xlabel)		=	'set xlabel "R, [Mpc]"'
-
+               GNUfields(1+title)	=	'\n the approximation borders: ' // trim(borders) // '"'  !=-  noenhanced
+					GNUfields(xlabel)		=	'R, [Mpc]'
 
 					GNUfields(plot1)		=	'"'//trim(slashfix(data_file_path))// &
                   '" u 1:' // trim(inttostr(2*geometry)) // ':' // trim(inttostr(1+2*geometry)) // ' w yerrorb ls 1'
-                  GNUfields(title1) = ' title "N_{ops}"'
+                  GNUfields(title1) = 'N_{ops}'
 					GNUfields(plot2)		=	', ' // trim(realtostr(R_nn(geometry))) // ',t ls 2'
-                  GNUfields(title2) = ' title "R_{nn} estimation"'
+                  GNUfields(title2) = 'R_{nn} estimation'
                if (method/=1) GNUfields(plot3)		=	', "" u 1:($1**' // &   !=-    ' // trim(borders) // '
                   trim(realtostr(FDE_LS_coefficients(geometry,1))) // &
                   ' * 10**' // trim(realtostr(FDE_LS_coefficients(geometry,2))) // ') w l ls 3'
-               if (method/=1) GNUfields(title3)    = ' title "trend approximation"'
+               if (method/=1) GNUfields(title3)    = 'trend approximation'
 					if (method/=1) GNUfields(plot4)		=	', ' // trim(inttostr(int(FDE_left_border)))  // ',t ls 3'
                if (method/=1) GNUfields(title4) = ' notitle'
                if (method/=1) GNUfields(plot5)		=	', ' // trim(inttostr(int(FDE_right_border))) // ',t ls 3'
@@ -168,38 +167,38 @@ module FDE_graphs
 
 					GNUfields(logscale)	=	'#set logscale'
 					GNUfields(extention_out_figure) = '#png'
-               GNUfields(grid)	=	'set grid xtics ytics mxtics mytics'
+               GNUfields(grid)	   =	'set grid xtics ytics mxtics mytics'
 
 					GNUfields(format_y)	=	'#'
 					GNUfields(format_x)	=	'#'
-					GNUfields(mxtics)		=	'set mxtics 1'
-					GNUfields(mytics)		=	'set mytics 1'
+					GNUfields(mxtics)		=	'1'
+					GNUfields(mytics)		=	'1'
 
-               GNUfields(title-1)   =  'set title "catalog: ' // trim(name(catalog_path)) // ' \'
-					GNUfields(title) 		=	'\n X vs Y plan \'
-					GNUfields(title+1) 	=	'\n N = '//trim(inttostrf(N_points,5))// &
+               GNUfields(title)   =  'set title "catalog: ' // trim(name(catalog_path)) // ' \'
+					GNUfields(title+1) 		=	'\n X vs Y plan \'
+					GNUfields(title+2) 	=	'\n N = '//trim(inttostrf(N_points,5))// &
                   ', D = '//trim(realtostrf(Fractal_Dimension,3,1))//' " noenhanced'
-					GNUfields(xlabel)		=	'set xlabel "Y, [Mpc]"'
-					GNUfields(ylabel)		=	'set ylabel "X, [Mpc]"'
-					GNUfields(xrange)		=	'set xrange ['//trim(realtostr(-radius_limit))//':'// &
+					GNUfields(xlabel)		=	'Y, [Mpc]'
+					GNUfields(ylabel)		=	'X, [Mpc]'
+					GNUfields(xrange)		=	'['//trim(realtostr(-radius_limit))//':'// &
                   trim(realtostr(radius_limit))//']'
-					GNUfields(yrange)		=	'set yrange ['//trim(realtostr(-radius_limit))//':'// &
+					GNUfields(yrange)		=	'['//trim(realtostr(-radius_limit))//':'// &
                   trim(realtostr(radius_limit))//']'
 
 					GNUfields(plot1)		=	'"'//trim(slashfix(catalog_path))//'" u '// &
                   trim(inttostr( N_col_cat_y ))//':'//trim(inttostr( N_col_cat_x ))//' w p ls 1'
-               GNUfields(title1)		=	' title "set points"'
+               GNUfields(title1)		=	'set points'
 					GNUfields(plot2)		=	', "'//trim(slashfix(cyrle_path))//'" u 1:2 w l ls 2'
-               GNUfields(title2)		=	' title "set border"'
+               GNUfields(title2)		=	'set border'
 
 					graph_name = 'XY_plan' ; GNUfields(extention_out_figure)='#eps' ; call plot(catalog_path)
 					graph_name = 'XY_plan' ; GNUfields(extention_out_figure)='#png' ; call plot(catalog_path)
 
 
 
-					GNUfields(title) 		=	'\n X vs Z plan \'
-					GNUfields(xlabel)		=	'set xlabel "Z, [Mpc]"'
-					GNUfields(ylabel)		=	'set ylabel "X, [Mpc]"'
+					GNUfields(title+1) 		=	'\n X vs Z plan \'
+					GNUfields(xlabel)		=	'Z, [Mpc]'
+					GNUfields(ylabel)		=	'X, [Mpc]'
 
 
 					GNUfields(plot1)		=	'"'//trim(slashfix(catalog_path))//'" u '// &
@@ -210,9 +209,9 @@ module FDE_graphs
 
 
 
-					GNUfields(title)		=	'\n Y vs Z plan \'
-					GNUfields(xlabel)		=	'set xlabel "Z, [Mpc]"'
-					GNUfields(ylabel)		=	'set ylabel "Y, [Mpc]"'
+					GNUfields(title+1)		=	'\n Y vs Z plan \'
+					GNUfields(xlabel)		=	'Z, [Mpc]'
+					GNUfields(ylabel)		=	'Y, [Mpc]'
 
 					GNUfields(plot1)		=	'"'//trim(slashfix(catalog_path))//'" u '// &
                   trim(inttostr( N_col_cat_z	))//':'//trim(inttostr( N_col_cat_y ))//' w p ls 1'
@@ -223,11 +222,11 @@ module FDE_graphs
                GNUfields(plot2:title2) = ''
 
 
-					GNUfields(xrange)		=	'#set xrange [0:330]'
-					GNUfields(yrange)		=	'#set yrange [-9:-27]'
-					GNUfields(title)		=	'\n m vs R plan \'
-					GNUfields(xlabel)		=	'set xlabel "R, [Mpc]"'
-					GNUfields(ylabel)		=	'set ylabel "m"'
+					GNUfields(xrange)		=	'[*:*]'
+					GNUfields(yrange)		=	'[*:*]'
+					GNUfields(title+1)		=	'\n m vs R plan \'
+					GNUfields(xlabel)		=	'R, [Mpc]'
+					GNUfields(ylabel)		=	'm'
 
 					GNUfields(plot1)		=	'"'//trim(slashfix(catalog_path))//'" u '// &
                   trim(inttostr( N_col_cat_dl	))//':'//trim(inttostr( N_col_cat_mag ))//' w p ls 1'
@@ -237,9 +236,9 @@ module FDE_graphs
 
 
 
-					GNUfields(title)		=	'\n M vs R plan \'
-					GNUfields(xlabel)		=	'set xlabel "R, [Mpc]"'
-					GNUfields(ylabel)		=	'set ylabel "M"'
+					GNUfields(title+1)		=	'\n M vs R plan \'
+					GNUfields(xlabel)		=	'R, [Mpc]'
+					GNUfields(ylabel)		=	'M'
 
 					GNUfields(plot1)		=	'"'//trim(slashfix(catalog_path))//'" u '// &
                   trim(inttostr( N_col_cat_dl	))//':'//trim(inttostr( N_col_cat_M ))//' w p ls 1'
@@ -249,9 +248,9 @@ module FDE_graphs
 
 
 
-					GNUfields(title)		=	'\n R vs z plan \'
-					GNUfields(xlabel)		=	'set xlabel "z"'
-					GNUfields(ylabel)		=	'set ylabel "R, [Mpc]"'
+					GNUfields(title+1)		=	'\n R vs z plan \'
+					GNUfields(xlabel)		=	'z'
+					GNUfields(ylabel)		=	'R, [Mpc]'
 
 					GNUfields(plot1)		=	'"'//trim(slashfix(catalog_path))//'" u '// &
                   trim(inttostr( N_col_cat_rs	))//':'//trim(inttostr( N_col_cat_dl))//' w p ls 1'
@@ -261,13 +260,13 @@ module FDE_graphs
 
 
 
-					GNUfields(title)		=	'\n L vs R plan \'
-					GNUfields(xlabel)		=	'set xlabel "R, [Mpc]"'
-					GNUfields(ylabel)		=	'set ylabel "L, [erg]"'
+					GNUfields(title+1)		=	'\n L vs R plan \'
+					GNUfields(xlabel)		=	'R, [Mpc]'
+					GNUfields(ylabel)		=	'L, [erg]'
 					GNUfields(logscale)  =  'set logscale y'
 					GNUfields(format_y)  =  'set format y "10^{%L}"'
 
-               GNUfields(yrange)		=	'set yrange [10**'//trim(realtostr( log10( minimal_luminosity )	))//':10**'// &
+               GNUfields(yrange)		=	'[10**'//trim(realtostr( log10( minimal_luminosity )	))//':10**'// &
                   trim(realtostr( log10( maximal_luminosity )	))//']'
 
 					GNUfields(plot1)		=	'"'//trim(slashfix(catalog_path))//'" u '// &

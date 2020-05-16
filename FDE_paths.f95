@@ -13,14 +13,13 @@ module FDE_paths
                      folder_MD_add_files              = 4   , &
                      folder_Statistics_add_files      = 5   , &
                      folder_Statistics_Report_tables  = 6   , &
-                     folder_Catalogue_add_files       = 7   , &
-                     folder_Temp_Generators_tests     = 8
+                     folder_Catalogue_add_files       = 7
 
 		contains
 
          subroutine gen_paths
 
-            WorkDir           =  trim( make_workdir() ) // './Main_Workspace/'
+            WorkDir           =  trim( make_workdir() ) // 'Main_Workspace/'   !=- ./
 
             path_CF2          =  trim(WorkDir)//'Catalogue/CF2.dat'
             path_2MRS         =  trim(WorkDir)//'Catalogue/2MRS-grouped.dat'
@@ -29,10 +28,6 @@ module FDE_paths
             path_catalog_2MRS =  trim(WorkDir)//'Catalogue/catalog_2MRS.dat'
 
             cyrle_path        =  trim(WorkDir)//'Samples/cyrle.dat'
-
-
-            uniform_test      =  trim(WorkDir)//'Temp/Generators_tests/uni_test.dat'
-            fractal_test      =  trim(WorkDir)//'Temp/Generators_tests/fra_test.dat'
 
             folders(:)=''
             folders( folder_Samples                   )  = trim(WorkDir) //'Samples/'
@@ -43,7 +38,6 @@ module FDE_paths
             folders( folder_Statistics_add_files      )  = trim(WorkDir) //'Statistics/add-files/'
             folders( folder_Statistics_Report_tables  )  = trim(WorkDir) //'Statistics/Report_tables/'
             folders( folder_Catalogue_add_files       )  = trim(WorkDir) //'Catalogue/add-files/'
-            !folders( folder_Temp_Generators_tests     )  = trim(WorkDir) //'Temp\Generators_tests\'
 
             end subroutine gen_paths
 

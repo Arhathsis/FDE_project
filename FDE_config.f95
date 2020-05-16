@@ -5,10 +5,10 @@ module FDE_config
    use global
 
    logical ::  sets_regenerating = .false. , &  !=- .true. | .false.
-               FDE_recalculating = .false. , &
-               FDE_replot        = .false.      !=- have not been written
+               FDE_recalculating = .false.  , &
+               FDE_replot        = .false.      !=- have not been written yet
 
-   integer ::  luminosity_model = 0  !=- 0 is uniform geometry (default), 1 is functions, 2 is ...
+   integer ::   luminosity_model = 0  !=- 0 is uniform geometry (default), 1 is functions, 2 is ...
 
    real(8) ::  minimal_luminosity   =  1d36  , &   !=- ergs
                maximal_luminosity   =  1d44  , &   !=- ergs
