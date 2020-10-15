@@ -5,25 +5,26 @@
 	module cosmology
 		use global
 		use GNUplot
+		use math
 
       logical ::  RDR_calculating = .true.   , &   !=- .false.
                   RDR_error       = .true.
 
 		integer,parameter :: N_models = 9   , &
-                  N_RDR_grid        = 2d3 , &   !=- graph grid
-                  N_RDR_grid_mode   = 3   , &   !=- progression power
-
+                  N_RDR_grid        = 1d3 , &   !=- graph grid
                   MS_grid           = 2d2 , &
                   MS_model_count    = 1d2
 
 		integer ::  N_grid            = 2d2 , &
-
+                  N_RDR_grid_mode   = 3   , &   !=- progression power
                   RDR_type          = 1   , &   !=- 0 is LCDM(0.3,70) , 1 is LCDM(\O_m,H_0) , 2 is wCDM(w,\O_m,H_0,O_k)
                   MS_real_model_count
 
 		real(8) ::	c   = 2.99792458d10	, &	!=- cm/s
+                  c_km_s = 2.99792458d5, &   !=- km/s
 						H_0 = 70d0           , &	!=- km/s/Mpc
 						H70 = 7d1            , &
+						H100 = 1d2           , &
 						dl  = 4421.71767d0   , &	!=- c/H_0/1d5 in GCS
 
 					 L_sun = 3.827d33       , &   !=- erg/s
@@ -49,10 +50,28 @@
 		real(8) ::  LumDist(N_models) = 1d0, MetrDist(N_models)= 1d0, DistMod(N_models)= 1d0, & !=- z for FCM > 0.0025
                   dz, x_max, I1, RDR(2,N_RDR_grid), &
 
-                  MS_table ( 1+3*MS_model_count , MS_grid ) = 0d0
+                  MS_table ( 1+3*MS_model_count , MS_grid ) = 0d0 , &
+
+                  vr_H0 , vr_distance , vr_velosity , vr_redshift
 
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
 		contains
+
+
+
+         real(8) function visible_redshift(x,y,z,vx,vy,vz)  !=- v = cz = Hr
+            real(8) x,y,z,vx,vy,vz  !=- in units of kpc
+
+            vr_distance = distance(x,y,z)          !=- in units of Mpc (because function `fun_from_R_to_z` is normed in Mpc scale)
+            vr_velosity = (x+y+z)       !=- in units of km/s
+
+            vr_redshift = fun_from_R_to_z( vr_distance )
+            vr_redshift = vr_redshift + vr_velosity / c_km_s
+
+            visible_redshift = vr_redshift
+
+            end function visible_redshift
+
 
 
          subroutine make_model_set
@@ -288,7 +307,7 @@
       subroutine redshift_distance_relation  !=- RDR( redshift , luminosity distance )
          if (RDR_calculating) then
             do i=1,N_RDR_grid
-               z = z_max**(1d0/N_RDR_grid_mode)/N_RDR_grid * i ; z = z**N_RDR_grid_mode
+               z = RDR_z_max**(1d0/N_RDR_grid_mode)/N_RDR_grid * i ; z = z**N_RDR_grid_mode
                RDR(1,i) = z
                RDR(2,i) = fun_from_z_to_R(z,H_0)
                end do
@@ -308,11 +327,16 @@
 			real(8) redshift,H0 ; fun_from_z_to_R = 0d0
             select case (RDR_type)
                   case(0)
-                     fun_from_z_to_R = D_wCDM(redshift,H0,-1d0,O_3,0d0)    !=- LCDM(0.3,0.7,H_0)
+                     fun_from_z_to_R = D_wCDM(redshift,H70,-1d0,O_3,0d0)    !=- LCDM(0.3,0.7,H_0)
                   case(1)
                      fun_from_z_to_R = D_wCDM(redshift,H0,-1d0,O_m,0d0)    !=- LCDM(\O_m,H_0)
                   case(2)
                      fun_from_z_to_R = D_wCDM(redshift,H0,w,O_m,O_k)       !=- wCDM()
+                  case(3)
+                     fun_from_z_to_R = R_wCDM(redshift,H70,-1d0,O_3,0d0)    !=- LCDM(0.3,0.7,H_0)
+                  case(4)
+                     O_m = 1 + O_k - O_v !=-   the Friedmann equation   (bug)
+                     fun_from_z_to_R = R_wCDM(redshift,H0,w,O_m,O_k)       !=- wCDM()
                   case default
                      if (RDR_error) write(*,*) ' do need choose the redshift-distance type '
                end select

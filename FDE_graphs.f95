@@ -3,11 +3,14 @@
 
 module FDE_graphs
 	use GNUplot
+   use global
 
 	use FDE_config
 	use FDE_paths
 	use FDE_generators
 	use FDE_methods
+
+      logical :: plot_catalog_eps_flag = .false.
 
 		integer, parameter :: N_graphs = 5
 
@@ -20,9 +23,58 @@ module FDE_graphs
 
 
 
+         subroutine plot_scaling(logscaling)
+            logical logscaling
+
+               call clear_plot_fields
+
+					GNUfields(ls1)			=	'set linestyle 1 lw 3 pt 7 ps 0.2 lt rgb "blue"'
+					GNUfields(ls2)			=	'set linestyle 2 lw 3 pt 7 ps 0.2 lt rgb "red"'
+					GNUfields(ls3)			=	'set linestyle 3 lw 3 pt 7 ps 0.2 lt rgb "purple"'
+					GNUfields(ls4)			=	'set linestyle 4 lw 3 pt 7 ps 0.2 lt rgb "orange"'
+
+               GNUfields(legend)    =  'set key bottom right'
+               GNUfields(grid)	   =	'set grid xtics ytics mxtics mytics'
+
+               if (logscaling) then
+                  GNUfields(format_y)	=	'set format y "10^{%L}"'
+                  GNUfields(logscale)	=	'set logscale'
+                  GNUfields(mxtics)		=	'10'
+                  GNUfields(mytics)		=	'10'
+                  else
+                     GNUfields(logscale)	=	'unset logscale'
+                     GNUfields(format_y)	=	'#set format y'
+                     GNUfields(mxtics)		=	'5'
+                     GNUfields(mytics)		=	'5'
+                  end if
+
+					GNUfields(format_x)	=	'#'
+					GNUfields(yrange)    =  '[50:450]'
+
+               GNUfields(title)     =  'The {/Symbol L}CDM model scaling'
+					GNUfields(xlabel)		=	'z'
+					GNUfields(ylabel)		=	'Mpc'
+
+					GNUfields(plot1)		=	'"'//trim(slashfix(scaling_filepath))//'" u 1:2 w l ls 1'
+               GNUfields(title1)    =  'r^{70}(z)'
+					GNUfields(plot2)		=	'"'//trim(slashfix(scaling_filepath))//'" u 1:3 w l ls 2'
+               GNUfields(title2)    =  'd_L^{70}(z)'
+					GNUfields(plot3)		=	'"'//trim(slashfix(scaling_filepath))//'" u 1:4 w l ls 3'
+               GNUfields(title3)    =  'r^{100}(z)'
+					GNUfields(plot4)		=	'"'//trim(slashfix(scaling_filepath))//'" u 1:5 w l ls 4'
+               GNUfields(title4)    =  'd_L^{100}(z)'
+
+					graph_name = ''
+                  GNUfields(extention_out_figure)='#png' ; call plot(scaling_filepath)
+
+            end subroutine plot_scaling
+
+
+
          subroutine FDE_GNUplots
 
             do method=methods_count,1,-1
+               FDE_method = method
                if (method/=1) call FDE_trend_log_xy( FDE_data_files_paths(method) )
                call FDE_plot(FDE_data_files_paths(method))
                enddo
@@ -122,16 +174,30 @@ module FDE_graphs
                GNUfields(add4) = 'set yrange ' // trim(y_axis_range)
                GNUfields(add5) = 'set parametric'
 
-                  borders = '[' // trim(inttostr(int(FDE_left_border))) // &
-                     ' :' // trim(inttostr(int(FDE_right_border))) // ' ]'
+            if ( FDE_method==3 .or. FDE_method==4 ) then
+               FDE_D(:) = 3d0+FDE_LS_coefficients(:,1)
+               else
+                  FDE_D(:) = FDE_LS_coefficients(:,1)
+               endif
+
+            if ( FDE_method<3 ) then !=- case
+               lb=FDE_left_border_MD
+               rb=FDE_right_border_MD
+               else
+                  lb=FDE_left_border
+                  rb=FDE_right_border
+            end if
+               theformat = '(F6.1)'
+                  borders = '[' // trim(realtostrFF(lb,theformat)) // &
+                     ' :' // trim(realtostrff(rb,theformat)) // ' ]'
 					GNUfields(title) 		=	'set title "' // trim(method_name) // &
                   ' \n the geometry: ' // trim(FDE_geometry_mask) // &
                   ' \n the effective parameters: N = ' // trim(adjustl(inttostr(N_points))) // &
                      ', D = '//trim(realtostrf(Fractal_Dimension,5,2)) // &
                      ', R_{max} = ' // trim(inttostr(int(radius_limit))) // ' Mpc' // &
                   ' \n the real parameters: N = ' // trim(adjustl(inttostr(FDE_points_amount))) // &
-                     ', D = '//trim(realtostrf(FDE_LS_coefficients(geometry,1),5,2)) // &
-                     ', R_{nn} = ' // trim(inttostr(int(R_nn(geometry)))) // ' Mpc \' !// &
+                     ', D = '//trim(realtostrf(FDE_D(geometry),5,2)) // &
+                     ', R_{nn} = ' // trim(realtostrFF(R_nn(geometry),theformat)) // ' Mpc \' !// &
                GNUfields(1+title)	=	'\n the approximation borders: ' // trim(borders) // '"'  !=-  noenhanced
 					GNUfields(xlabel)		=	'R, [Mpc]'
 
@@ -139,14 +205,14 @@ module FDE_graphs
                   '" u 1:' // trim(inttostr(2*geometry)) // ':' // trim(inttostr(1+2*geometry)) // ' w yerrorb ls 1'
                   GNUfields(title1) = 'N_{ops}'
 					GNUfields(plot2)		=	', ' // trim(realtostr(R_nn(geometry))) // ',t ls 2'
-                  GNUfields(title2) = 'R_{nn} estimation'
+                  GNUfields(title2) = 'R_{nn}'
                if (method/=1) GNUfields(plot3)		=	', "" u 1:($1**' // &   !=-    ' // trim(borders) // '
                   trim(realtostr(FDE_LS_coefficients(geometry,1))) // &
                   ' * 10**' // trim(realtostr(FDE_LS_coefficients(geometry,2))) // ') w l ls 3'
                if (method/=1) GNUfields(title3)    = 'trend approximation'
-					if (method/=1) GNUfields(plot4)		=	', ' // trim(inttostr(int(FDE_left_border)))  // ',t ls 3'
+					if (method/=1) GNUfields(plot4)		=	', ' // trim(realtostr(lb))  // ',t ls 3'
                if (method/=1) GNUfields(title4) = ' notitle'
-               if (method/=1) GNUfields(plot5)		=	', ' // trim(inttostr(int(FDE_right_border))) // ',t ls 3'
+               if (method/=1) GNUfields(plot5)		=	', ' // trim(realtostr(rb)) // ',t ls 3'
                if (method/=1) GNUfields(title5) = ' notitle'
 
 					graph_name = FDE_geometry_mask(1:1)
@@ -158,6 +224,8 @@ module FDE_graphs
 
 		subroutine plot_catalog(catalog_path)
 			character(len) catalog_path
+
+                  write(*,*) '   plot_catalog: plotting'
 
                call clear_plot_fields
                call Generate_Cyrle(radius_limit)
@@ -176,7 +244,8 @@ module FDE_graphs
 
                GNUfields(title)   =  'set title "catalog: ' // trim(name(catalog_path)) // ' \'
 					GNUfields(title+1) 		=	'\n X vs Y plan \'
-					GNUfields(title+2) 	=	'\n N = '//trim(inttostrf(N_points,5))// &
+
+					GNUfields(title+2) 	=	'\n N = '//trim(inttostrf(final_counter,10))// &
                   ', D = '//trim(realtostrf(Fractal_Dimension,3,1))//' " noenhanced'
 					GNUfields(xlabel)		=	'Y, [Mpc]'
 					GNUfields(ylabel)		=	'X, [Mpc]'
@@ -191,7 +260,9 @@ module FDE_graphs
 					GNUfields(plot2)		=	', "'//trim(slashfix(cyrle_path))//'" u 1:2 w l ls 2'
                GNUfields(title2)		=	'set border'
 
-					graph_name = 'XY_plan' ; GNUfields(extention_out_figure)='#eps' ; call plot(catalog_path)
+					if (plot_catalog_eps_flag) then
+                  graph_name = 'XY_plan' ; GNUfields(extention_out_figure)='#eps' ; call plot(catalog_path)
+                  endif
 					graph_name = 'XY_plan' ; GNUfields(extention_out_figure)='#png' ; call plot(catalog_path)
 
 
@@ -204,7 +275,9 @@ module FDE_graphs
 					GNUfields(plot1)		=	'"'//trim(slashfix(catalog_path))//'" u '// &
                   trim(inttostr( N_col_cat_z	))//':'//trim(inttostr( N_col_cat_x ))//' w p ls 1'
 
-					graph_name = 'XZ_plan' ; GNUfields(extention_out_figure)='#eps' ; call plot(catalog_path)
+					if (plot_catalog_eps_flag) then
+                  graph_name = 'XZ_plan' ; GNUfields(extention_out_figure)='#eps' ; call plot(catalog_path)
+                  endif
 					graph_name = 'XZ_plan' ; GNUfields(extention_out_figure)='#png' ; call plot(catalog_path)
 
 
@@ -216,7 +289,9 @@ module FDE_graphs
 					GNUfields(plot1)		=	'"'//trim(slashfix(catalog_path))//'" u '// &
                   trim(inttostr( N_col_cat_z	))//':'//trim(inttostr( N_col_cat_y ))//' w p ls 1'
 
-					graph_name = 'YZ_plan' ; GNUfields(extention_out_figure)='#eps' ; call plot(catalog_path)
+					if (plot_catalog_eps_flag) then
+                  graph_name = 'YZ_plan' ; GNUfields(extention_out_figure)='#eps' ; call plot(catalog_path)
+                  endif
 					graph_name = 'YZ_plan' ; GNUfields(extention_out_figure)='#png' ; call plot(catalog_path)
 
                GNUfields(plot2:title2) = ''
@@ -231,7 +306,9 @@ module FDE_graphs
 					GNUfields(plot1)		=	'"'//trim(slashfix(catalog_path))//'" u '// &
                   trim(inttostr( N_col_cat_dl	))//':'//trim(inttostr( N_col_cat_mag ))//' w p ls 1'
 
-					graph_name = 'mag_vs_R' ; GNUfields(extention_out_figure)='#eps' ; call plot(catalog_path)
+					if (plot_catalog_eps_flag) then
+                  graph_name = 'mag_vs_R' ; GNUfields(extention_out_figure)='#eps' ; call plot(catalog_path)
+                  endif
 					graph_name = 'mag_vs_R' ; GNUfields(extention_out_figure)='#png' ; call plot(catalog_path)
 
 
@@ -243,8 +320,10 @@ module FDE_graphs
 					GNUfields(plot1)		=	'"'//trim(slashfix(catalog_path))//'" u '// &
                   trim(inttostr( N_col_cat_dl	))//':'//trim(inttostr( N_col_cat_M ))//' w p ls 1'
 
-					graph_name = 'M_vs_R' ; GNUfields(extention_out_figure)='#eps' ; call plot(catalog_path)
-					graph_name = 'M_vs_R' ; GNUfields(extention_out_figure)='#png' ; call plot(catalog_path)
+					if (plot_catalog_eps_flag) then
+                  graph_name = 'M_vs_R' ; GNUfields(extention_out_figure)='#eps' ; call plot(catalog_path)
+                  endif
+               graph_name = 'M_vs_R' ; GNUfields(extention_out_figure)='#png' ; call plot(catalog_path)
 
 
 
@@ -255,7 +334,9 @@ module FDE_graphs
 					GNUfields(plot1)		=	'"'//trim(slashfix(catalog_path))//'" u '// &
                   trim(inttostr( N_col_cat_rs	))//':'//trim(inttostr( N_col_cat_dl))//' w p ls 1'
 
-					graph_name = 'R_vs_z' ; GNUfields(extention_out_figure)='#eps' ; call plot(catalog_path)
+					if (plot_catalog_eps_flag) then
+                  graph_name = 'R_vs_z' ; GNUfields(extention_out_figure)='#eps' ; call plot(catalog_path)
+                  endif
 					graph_name = 'R_vs_z' ; GNUfields(extention_out_figure)='#png' ; call plot(catalog_path)
 
 
@@ -263,16 +344,19 @@ module FDE_graphs
 					GNUfields(title+1)		=	'\n L vs R plan \'
 					GNUfields(xlabel)		=	'R, [Mpc]'
 					GNUfields(ylabel)		=	'L, [erg]'
-					GNUfields(logscale)  =  'set logscale y'
+					GNUfields(logscale)  =  '#set logscale y'
 					GNUfields(format_y)  =  'set format y "10^{%L}"'
 
-               GNUfields(yrange)		=	'[10**'//trim(realtostr( log10( minimal_luminosity )	))//':10**'// &
-                  trim(realtostr( log10( maximal_luminosity )	))//']'
+               GNUfields(yrange)    =  '[*:*]'
+               !GNUfields(yrange)		=	'[10**'//trim(realtostr( log10( minimal_luminosity )	))//':10**'// &
+               !   trim(realtostr( log10( maximal_luminosity )	))//']'
 
 					GNUfields(plot1)		=	'"'//trim(slashfix(catalog_path))//'" u '// &
                   trim(inttostr( N_col_cat_dl	))//':'//trim(inttostr( N_col_cat_Lum ))//' w p ls 1'
 
-					graph_name = 'L_vs_R' ; GNUfields(extention_out_figure)='#eps' ; call plot(catalog_path)
+					if (plot_catalog_eps_flag) then
+                  graph_name = 'L_vs_R' ; GNUfields(extention_out_figure)='#eps' ; call plot(catalog_path)
+                  endif
 					graph_name = 'L_vs_R' ; GNUfields(extention_out_figure)='#png' ; call plot(catalog_path)
 
          end subroutine

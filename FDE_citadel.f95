@@ -7,6 +7,11 @@ module FDE_citadel
    use FDE_scripts
    use FDE_generators
 
+   use global
+
+   character(len) input_command , logscaling
+   real(8) :: start_scale = -1, final_scale = -1, scale_step = -1
+
    contains
 
 		subroutine preparation
@@ -26,13 +31,25 @@ module FDE_citadel
 
 				call preparation
 
-				do ; write(*,*) '--'
+				do ; 33 continue ; write(*,*) '--'
 
-					read(*,*) command
+					read(*,'(A256)',err=33,end=33) input_command
+                  read(input_command,*,err=33,end=33) command
 
 					select case (command)
+
                   case ('reset')
                      goto 22
+
+                  case ('scaling')
+                     start_scale=-1 ; final_scale=-1 ; scale_step=-1 ; logscaling=''
+                     read(input_command,*,iostat=iostat_value) command, start_scale, final_scale, scale_step , logscaling
+                        if ( start_scale==-1 .or. final_scale==-1 .or. scale_step==-1 ) then
+                           write(*,*) 'scaling input error: scaling 10 100 10 [log]'
+                           else
+                              call scaling(start_scale, final_scale, scale_step , logscaling)
+                           endif
+
 						case ('cg')
 							!call compaire_graphics
 						case ('exit')
@@ -43,8 +60,24 @@ module FDE_citadel
 							call uniform_catalog_analysis
 						case ('cca')
 							call cantor_catalog_analysis
+                  case ('sc')
+                     call Super_Cantor_analysis
 						case ('c')
 							call input_catalogs_analysis
+
+                  case ('avz')
+                     read(input_command,*,iostat=iostat_value) command,command1,command2
+                     if ( command1=='universe' .or. command1=='u' ) call add_visible_z_universe
+
+                  case ('add')
+                     read(input_command,*,iostat=iostat_value) command,command1,command2
+                     if ( command1=='visible' .and. command2=='z') call add_visible_z
+
+                     call add_visible_z   !=- fix
+                     call plot_catalog ( FDE_catalog ) !=- fix
+
+                  case ('e')
+                     call analysis_external_FDE_catalog
 
 						case (char(225))	!=- rus c
 							call input_catalogs_analysis

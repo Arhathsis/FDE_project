@@ -14,7 +14,9 @@
 			plot11=53,title11=54,plot12=55,title12=56,plot13=57,title13=58,plot14=59,title14=60,set_parametric=22, &
 			thickness , comma_fix , dash_type
 
-		character(len) ::	pngterm  = 'set term pngcairo enhanced font "Verdana,10" size 850, 630'				, &
+      real(8) :: external_parameter = 0
+
+		character(len) ::	pngterm  = 'set term pngcairo enhanced font "Verdana,12" size 1400, 1050'				, &
 								epsterm  = 'set term postscript enhanced color font "Verdana,14" size 8.5, 6.3'	, &
 								scriptpath  = '', figurepath  = '',	figoutput  = '', GNUdatafile = '', graph_name='', &
 								fig_dir = '', GNUplots = '', GNUscripts = '', script_file_path='', plot_dir='', &
@@ -79,7 +81,8 @@
                            // '/' // trim(fig_dir)
                      end select
 
-                  call create_folder( trim(file_path(datafile)) // trim(GNUscripts) )
+                  output = trim(file_path(datafile)) // trim(GNUscripts)
+                  call create_folder( output )
                   call create_folder( plot_dir )
 
                   figoutput = trim(file_path(datafile)) // trim(GNUscripts) // trim(name(datafile)) // &
@@ -179,8 +182,10 @@
 
          GNUfields( : ) = ''  !=- default
          fig_dir  = ''
-         pngterm  = 'set term pngcairo enhanced font "Verdana,10" size 850, 630' !=- default
+         pngterm  = 'set term pngcairo enhanced font "Verdana,16" size 1400, 1050'
          epsterm  = 'set term postscript enhanced color font "Verdana,14" size 8.5, 6.3'
+
+         !=- Verdana , Palatino-Roman
 
          end subroutine
 

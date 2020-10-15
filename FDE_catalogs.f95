@@ -49,13 +49,15 @@ module FDE_catalogs
       subroutine reading(N,shift,path,data_catalog)
          character(len) path ; integer N,shift ; real(8) data_catalog(:,:)
 
-         open(N,file=path,status='old')
+         unit_1 = random_unit()
+
+         open(unit_1,file=path,status='old')
             do i=1,shift ; read(N,*,end=11) line ; enddo
 
             do i=1,N
-               read(N,*,end=11) data_catalog(:,i)
+               read(unit_1,*,end=11) data_catalog(:,i)
                enddo
-            11 continue ; close(N)
+            11 continue ; close(unit_1)
 
          end subroutine
 
@@ -67,9 +69,11 @@ module FDE_catalogs
 
          N_mc = size( data_array(1,:) )
 
-         open( N_mc , file = catalog_path , status = 'replace' )
-            write(N_mc,catalog_heads_format  ) (catalog_titles(j),j=1,N_col_std)
-            write(N_mc,catalog_heading_format) (catalog_titles(j),j=1,N_col_std)
+         unit_2 = random_unit()
+
+         open( unit_2 , file = catalog_path , status = 'replace' )
+            write(unit_2,catalog_heads_format  ) (catalog_titles(j),j=1,N_col_std)
+            write(unit_2,catalog_heading_format) (catalog_titles(j),j=1,N_col_std)
 
             do i=1,N_mc
 
@@ -90,12 +94,12 @@ module FDE_catalogs
 					if (data_array( N_col_rs	,i )==0) &
 						catalog_array( N_col_cat_rs	,i ) = fun_from_R_to_z(catalog_array(	N_col_cat_dl	,i	))	!=- default = 0
 					if (data_array( N_col_R		,i )==0) &
-						catalog_array( N_col_cat_dl	,i ) = fun_from_z_to_R(catalog_array(	N_col_cat_rs	,i	))	!=- default = 0
+						catalog_array( N_col_cat_dl	,i ) = fun_from_z_to_R(catalog_array(	N_col_cat_rs	,i	),7d1)	!=- default = 0
 
-               write(N_mc,catalog_format) (catalog_array(j,i),j=1,N_col_std)
+               write(unit_2,catalog_format) (catalog_array(j,i),j=1,N_col_std)
 
                enddo
-            close(N_mc)
+            close(unit_2)
 
          end subroutine
 
