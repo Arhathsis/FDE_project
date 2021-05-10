@@ -1,5 +1,5 @@
 !=- Fractal Dimension Estimation
-!=- © Stanislav Shirokov, 2014-2020
+!=- Â© Stanislav Shirokov, 2014-2020
 
 module FDE_graphs
 	use GNUplot
@@ -16,7 +16,7 @@ module FDE_graphs
 
       integer :: method
 
-		character(len) :: graths_names(N_graphs)='' , FDE_method_mask , method_name , FDE_geometry_mask , &
+		character(length) :: graths_names(N_graphs)='' , FDE_method_mask , method_name , FDE_geometry_mask , &
                         borders , y_axis_range
 
 	contains
@@ -83,11 +83,11 @@ module FDE_graphs
 
 
 
-      character(len) function FDE_method_mask_searching( data_file_path )
-         character(len) data_file_path ; integer i
+      character(length) function FDE_method_mask_searching( data_file_path )
+         character(length) data_file_path ; integer i
 
             l1=1 ; l2=1
-            do i=1,len
+            do i=1,length
                if ( data_file_path(i:i+3) == '.dat' ) l2=i-1
                if ( data_file_path(i:i)   == '_'    ) l1=1+i
                end do
@@ -98,7 +98,7 @@ module FDE_graphs
 
 
       subroutine FDE_plot(data_file_path)
-         character(len) data_file_path
+         character(length) data_file_path
 
             FDE_method_mask = FDE_method_mask_searching( data_file_path )
             select case ( FDE_method_mask )
@@ -153,7 +153,7 @@ module FDE_graphs
 
 
       subroutine FDE_plot_script(data_file_path)
-         character(len) data_file_path
+         character(length) data_file_path
 
                call clear_plot_fields
 
@@ -191,14 +191,14 @@ module FDE_graphs
                   borders = '[' // trim(realtostrFF(lb,theformat)) // &
                      ' :' // trim(realtostrff(rb,theformat)) // ' ]'
 					GNUfields(title) 		=	'set title "' // trim(method_name) // &
-                  ' \n the geometry: ' // trim(FDE_geometry_mask) // &
-                  ' \n the effective parameters: N = ' // trim(adjustl(inttostr(N_points))) // &
+                  ' \\n the geometry: ' // trim(FDE_geometry_mask) // &
+                  ' \\n the effective parameters: N = ' // trim(adjustl(inttostr(N_points))) // &
                      ', D = '//trim(realtostrf(Fractal_Dimension,5,2)) // &
                      ', R_{max} = ' // trim(inttostr(int(radius_limit))) // ' Mpc' // &
-                  ' \n the real parameters: N = ' // trim(adjustl(inttostr(FDE_points_amount))) // &
+                  ' \\n the real parameters: N = ' // trim(adjustl(inttostr(FDE_points_amount))) // &
                      ', D = '//trim(realtostrf(FDE_D(geometry),5,2)) // &
                      ', R_{nn} = ' // trim(realtostrFF(R_nn(geometry),theformat)) // ' Mpc \' !// &
-               GNUfields(1+title)	=	'\n the approximation borders: ' // trim(borders) // '"'  !=-  noenhanced
+               GNUfields(1+title)	=	'\\n the approximation borders: ' // trim(borders) // '"'  !=-  noenhanced
 					GNUfields(xlabel)		=	'R, [Mpc]'
 
 					GNUfields(plot1)		=	'"'//trim(slashfix(data_file_path))// &
@@ -223,7 +223,7 @@ module FDE_graphs
 
 
 		subroutine plot_catalog(catalog_path)
-			character(len) catalog_path
+			character(length) catalog_path
 
                   write(*,*) '   plot_catalog: plotting'
 
@@ -232,6 +232,7 @@ module FDE_graphs
 
 					GNUfields(ls1)			=	'set linestyle 1 lw 1 pt 7 ps 0.2 lt rgb "blue"'
 					GNUfields(ls2)			=	'set linestyle 2 lw 1 pt 7 ps 0.2 lt rgb "black"'
+					write(*,*) GNUfields(ls1:ls2)
 
 					GNUfields(logscale)	=	'#set logscale'
 					GNUfields(extention_out_figure) = '#png'
@@ -243,9 +244,9 @@ module FDE_graphs
 					GNUfields(mytics)		=	'1'
 
                GNUfields(title)   =  'set title "catalog: ' // trim(name(catalog_path)) // ' \'
-					GNUfields(title+1) 		=	'\n X vs Y plan \'
+					GNUfields(title+1) 		=	'\\n X vs Y plan \'
 
-					GNUfields(title+2) 	=	'\n N = '//trim(inttostrf(final_counter,10))// &
+					GNUfields(title+2) 	=	'\\n N = '//trim(inttostrf(final_counter,10))// &
                   ', D = '//trim(realtostrf(Fractal_Dimension,3,1))//' " noenhanced'
 					GNUfields(xlabel)		=	'Y, [Mpc]'
 					GNUfields(ylabel)		=	'X, [Mpc]'
@@ -267,7 +268,7 @@ module FDE_graphs
 
 
 
-					GNUfields(title+1) 		=	'\n X vs Z plan \'
+					GNUfields(title+1) 		=	'\\n X vs Z plan \'
 					GNUfields(xlabel)		=	'Z, [Mpc]'
 					GNUfields(ylabel)		=	'X, [Mpc]'
 
@@ -282,7 +283,7 @@ module FDE_graphs
 
 
 
-					GNUfields(title+1)		=	'\n Y vs Z plan \'
+					GNUfields(title+1)		=	'\\n Y vs Z plan \'
 					GNUfields(xlabel)		=	'Z, [Mpc]'
 					GNUfields(ylabel)		=	'Y, [Mpc]'
 
@@ -299,7 +300,7 @@ module FDE_graphs
 
 					GNUfields(xrange)		=	'[*:*]'
 					GNUfields(yrange)		=	'[*:*]'
-					GNUfields(title+1)		=	'\n m vs R plan \'
+					GNUfields(title+1)		=	'\\n m vs R plan \'
 					GNUfields(xlabel)		=	'R, [Mpc]'
 					GNUfields(ylabel)		=	'm'
 
@@ -313,7 +314,7 @@ module FDE_graphs
 
 
 
-					GNUfields(title+1)		=	'\n M vs R plan \'
+					GNUfields(title+1)		=	'\\n M vs R plan \'
 					GNUfields(xlabel)		=	'R, [Mpc]'
 					GNUfields(ylabel)		=	'M'
 
@@ -327,7 +328,7 @@ module FDE_graphs
 
 
 
-					GNUfields(title+1)		=	'\n R vs z plan \'
+					GNUfields(title+1)		=	'\\n R vs z plan \'
 					GNUfields(xlabel)		=	'z'
 					GNUfields(ylabel)		=	'R, [Mpc]'
 
@@ -341,7 +342,7 @@ module FDE_graphs
 
 
 
-					GNUfields(title+1)		=	'\n L vs R plan \'
+					GNUfields(title+1)		=	'\\n L vs R plan \'
 					GNUfields(xlabel)		=	'R, [Mpc]'
 					GNUfields(ylabel)		=	'L, [erg]'
 					GNUfields(logscale)  =  '#set logscale y'

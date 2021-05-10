@@ -1,5 +1,5 @@
 !=- Fractal Dimension Estimation
-!=- © Stanislav Shirokov, 2014-2020
+!=- Â© Stanislav Shirokov, 2014-2020
 
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
 
@@ -17,7 +17,7 @@
 
          integer,parameter :: methods_count = 4 , geometries_count = 4 , FDE_out_table_size = 100
 
-         character(len) :: NP_name = '_NP.dat' , MD_name = '_MD.dat' , diffCD_name = '_DiffCD.dat' , &
+         character(length) :: NP_name = '_NP.dat' , MD_name = '_MD.dat' , diffCD_name = '_DiffCD.dat' , &
                            intCD_name = '_IntCD.dat' , FDE_data_file_path , FDE_data_format , &
                            FDE_NP_data_file_path , FDE_MD_data_file_path , FDE_IntCD_data_file_path , &
                            FDE_DiffCD_data_file_path , FDE_data_files_paths(methods_count) , &
@@ -105,7 +105,7 @@
 
 
 			subroutine FDE_complex( data_file_path )
-				character(len) data_file_path ; integer i,j,k , ii,jj,kk
+				character(length) data_file_path ; integer i,j,k , ii,jj,kk
 
 					write(*,'(/,A)') '   FDE-method is started..'
 
@@ -496,7 +496,7 @@
 
 
          subroutine read_FDE_data_file(data_file_path)
-            character(len) data_file_path
+            character(length) data_file_path
             integer i
 
                unit_7 = random_unit()
@@ -517,7 +517,7 @@
 
 
 			subroutine FDE_trend_log_xy( data_file_path )
-            character(len) data_file_path ; integer i , j , k ; real(8) lb,rb
+            character(length) data_file_path ; integer i , j , k ; real(8) lb,rb
 
             if (FDE_method==2) then !=- case
                lb=FDE_left_border_MD
@@ -560,7 +560,7 @@
 
 
 			subroutine FDE_variation_log_xy( data_file_path )   !=- have not been written
-            character(len) data_file_path
+            character(length) data_file_path
 
 				end subroutine
 

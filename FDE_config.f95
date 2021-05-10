@@ -1,5 +1,5 @@
 !=- Fractal Dimension Estimation
-!=- © Stanislav Shirokov, 2014-2020
+!=- Â© Stanislav Shirokov, 2014-2020
 
 module FDE_config
    use global
@@ -19,7 +19,7 @@ module FDE_config
    integer,parameter :: N_col_std = 10, N_col_cat_x = 1, N_col_cat_y = 2, N_col_cat_z = 3, N_col_cat_l = 4, &
 		N_col_cat_b = 5, N_col_cat_dl = 6, N_col_cat_Lum = 7, N_col_cat_mag = 8, N_col_cat_M = 9, N_col_cat_rs = 10
 
-   character(len) :: catalog_titles(N_col_std)='',catalog_heading_format='',catalog_format='',catalog_heads_format=''
+   character(length) :: catalog_titles(N_col_std)='',catalog_heading_format='',catalog_format='',catalog_heads_format=''
 
    contains
 

@@ -1,5 +1,5 @@
 !=- Fractal Dimension Estimation
-!=- © Stanislav Shirokov, 2014-2020
+!=- Â© Stanislav Shirokov, 2014-2020
 
 module FDE_scripts
 	use math
@@ -13,8 +13,8 @@ module FDE_scripts
 	use FDE_graphs
    use FDE_generators
 
-      character(len) :: catalog_name , model_kind , sample_path , GCC_catalog_name , catalog_path
-      character(len),allocatable,dimension(:) :: string_values
+      character(length) :: catalog_name , model_kind , sample_path , GCC_catalog_name , catalog_path
+      character(length),allocatable,dimension(:) :: string_values
 
       integer ::        columns_numbers(7) = 1 , set_number = 1
 
@@ -54,12 +54,12 @@ module FDE_scripts
 
                FDE_seed_order = 2
 
-               generations = 8
+               generations = 3
                Fractal_Dimension = 2.2
             !read(*,*) Fractal_Dimension
                N_points = 26d3
 
-               radius_limit = 31d0
+               radius_limit = 110d0
                FDE_recalculating = .true.
 
                FDE_left_border   = 1.6
@@ -77,9 +77,9 @@ module FDE_scripts
                catalog_name = trim( make_catalog_name() )
                   call Generate_Cantor_Catalog(catalog_name)   !=- input: exact the pathname of datafile
 
-                  !call plot_catalog ( catalog_name )
+                  call plot_catalog ( catalog_name )
                   call FDE_complex  ( catalog_name )
-                  !call FDE_GNUplots
+                  call FDE_GNUplots
 
                   enddo
 
@@ -120,7 +120,7 @@ module FDE_scripts
 
       subroutine scaling(start_scale, final_scale, scale_step, key)
          logical :: logscaling = .false.
-         character(len) key
+         character(length) key
          real(8) start_scale, final_scale, scale_step
          integer i,N
 
@@ -304,11 +304,11 @@ module FDE_scripts
                         else
 
                            j=1 ; i1=1 ; i2=1
-                           do i=1,len
+                           do i=1,length
                               if (line(i:i)==',') then
                                  i2=i-1
                                  string_values(j)=line(i1:i2)
-                                 if (j==n-1) string_values(j+1)=line(i+1:len)
+                                 if (j==n-1) string_values(j+1)=line(i+1:length)
                                  j=1+j ; i1=i+1
                                  if (j>n) exit
                                  end if
@@ -452,11 +452,11 @@ module FDE_scripts
                         else
 
                            j=1 ; i1=1 ; i2=1
-                           do i=1,len
+                           do i=1,length
                               if (line(i:i)==',') then
                                  i2=i-1
                                  string_values(j)=line(i1:i2)
-                                 if (j==n-1) string_values(j+1)=line(i+1:len)
+                                 if (j==n-1) string_values(j+1)=line(i+1:length)
                                  j=1+j ; i1=i+1
                                  if (j>n) exit
                                  end if
@@ -584,18 +584,21 @@ module FDE_scripts
 
 
 
-         subroutine Super_Cantor_analysis
+         subroutine Super_Cantor_analysis(D, N, catalog_name_out)
+            character(length), allocatable, dimension(:), intent(out) :: catalog_name_out
+            integer :: peremennaya_cycla
+            allocate(catalog_name_out(N))
 
                                   FDE_recalculating = .false.
                               GCC_sets_regenerating = .false.
                                         GSCS_replot = .false.
                                GCC_sphere_selection = .true.
 
-                                 GCC_catalog_prefix = 'Scantor'
-                                 GCC_FDE_seed_order = 2
+                                 GCC_catalog_prefix = 'Scantor_task1'
+                                 GCC_FDE_seed_order = 4
 
-                              GCC_Fractal_Dimension = 2.2      !=- Milli-Millennium: 2.2     !=- it is may make array of multi-fractal
-                        GCC_Super_Fractal_Dimension = 1.35     !=- Milli-Millennium: 1.35
+                              GCC_Fractal_Dimension = D      !=- Milli-Millennium: 2.2     !=- it is may make array of multi-fractal
+                        GCC_Super_Fractal_Dimension =  GCC_Fractal_Dimension   !=- Milli-Millennium: 1.35
 
                                     GCC_generations = 5        !=- Milli-Millennium: 5
                               GCC_Super_generations = 6        !=- Milli-Millennium: 6
@@ -603,8 +606,8 @@ module FDE_scripts
                      GCC_uniform_approach_parameter = 1        !=- Milli-Millennium: 1
                GCC_Super_uniform_approach_parameter = 0        !=- Milli-Millennium: 0
 
-                                   GCC_radius_limit = 31d0     !=- Milli-Millennium: 31
-                                       GCC_N_points = 2.8d4    !=- Milli-Millennium: 28k
+                                   GCC_radius_limit = 160    !=- Milli-Millennium: 31
+                                       GCC_N_points = 1d4    !=- Milli-Millennium: 28k
 
                                     FDE_left_border = 3
                                    FDE_right_border = 15
@@ -614,39 +617,176 @@ module FDE_scripts
 
                                           RDR_z_max = 0.01  !=- to need automatize
                                            FDE_grid = 100
-                                         set_number = 3
+                                         set_number = N
 
-         do i=1,set_number
+         do peremennaya_cycla=1,set_number
+                           write(*,*) 'test1 ', peremennaya_cycla
                   call GCC_default ; call make_FDE_seed
                GCC_catalog_name = trim( make_catalog_name() )
+               catalog_name_out(peremennaya_cycla) = GCC_catalog_name
 
                call Generate_Super_Cantor_Catalog(GCC_catalog_name)
-                  !=- if (GSCS_replot) call plot_catalog ( skeleton )
+                  if (GSCS_replot) call plot_catalog ( skeleton )
                   if (GSCS_replot) call plot_catalog ( GCC_catalog_name )
 
                call FDE_complex  ( GCC_catalog_name )
                call FDE_GNUplots
             enddo
 
-         GCC_N_points = 2.8d5
-         GCC_FDE_seed_order = 3
+         !GCC_N_points = 1d3
+         !GCC_FDE_seed_order = 3
 
-         do i=1,set_number
-                  call GCC_default ; call make_FDE_seed
-               GCC_catalog_name = trim( make_catalog_name() )
+         !do i=1,set_number
+         !         call GCC_default ; call make_FDE_seed
+         !      GCC_catalog_name = trim( make_catalog_name() )
 
-               call Generate_Super_Cantor_Catalog(GCC_catalog_name)
+         !      call Generate_Super_Cantor_Catalog(GCC_catalog_name)
                   !=- if (GSCS_replot) call plot_catalog ( skeleton )
-                  if (GSCS_replot) call plot_catalog ( GCC_catalog_name )
+         !         if (GSCS_replot) call plot_catalog ( GCC_catalog_name )
 
-               call FDE_complex  ( GCC_catalog_name )
-               call FDE_GNUplots
-            enddo
+         !      call FDE_complex  ( GCC_catalog_name )
+         !      call FDE_GNUplots
+         !enddo
+        !#omp end do
+        !#omp end parallel
 
             end subroutine
 
 
+         subroutine example1
 
+            integer :: i
 
+            !do i=1,10
+                !call Super_Cantor_analysis(1.0 + i*0.15, 3)
+                !call Super_Cantor_analysis(1.0 + i*0.15, 8)
+                !call Super_Cantor_analysis(1.0 + i*0.15, 21)
+                !call Super_Cantor_analysis(1.0 + i*0.15, 55)
+            !enddo
+            !call Super_Cantor_analysis(2.0, 5, catalog_name_out)
+
+         end subroutine example1
+
+         subroutine mean_MD(D, N)
+            real(8), allocatable, dimension(:) :: Rmin, Rmax, R_setka, A_mean, B_mean, North_mean, &
+                                                  South_mean, Adel_mean, Bdel_mean, Ndel_mean, Sdel_mean
+            real(8), allocatable, dimension(:,:) :: A, B, North, South, A_delta, B_delta, N_delta, S_delta
+            real(8), dimension(9) :: line_from_file
+            character(length), allocatable, dimension(:) :: catalog_name_out1
+            character(length) :: catalog_name_out2
+            real(8) :: R_right_border, R_left_border
+            integer :: nstrings
+            allocate(catalog_name_out1(N))
+            allocate(Rmin(N))
+            allocate(Rmax(N))
+            call Super_Cantor_analysis(D, N, catalog_name_out1)
+            do i=1,N
+               write(*,*) catalog_name_out1(i)
+            enddo
+
+            do i=1,N
+               catalog_name_out2 = catalog_name_out1(i)
+               catalog_name_out2 = catalog_name_out2(23:53)
+               catalog_name_out2 = 'Main_Workspace/MD/add-files'//trim(catalog_name_out2)//'_100_MD.dat'
+               catalog_name_out1(i) = catalog_name_out2
+               write(*,*)catalog_name_out2
+
+               open(1,file=catalog_name_out2)
+               read(1,*) line_from_file
+               Rmin(i) = line_from_file(1)
+               do
+                  read(1,*, end=99) line_from_file
+               end do
+            99 Rmax(i) = line_from_file(1)
+               close(1)
+            enddo
+
+            R_left_border = maxval(Rmin)
+            R_right_border = minval(Rmax)
+
+            open(1,file=catalog_name_out2)
+            nstrings = 0
+            do
+               read(1,*, end=97) line_from_file
+               if ((line_from_file(1) >= R_left_border).and.(line_from_file(1) <= R_right_border)) then
+                   nstrings = nstrings+1
+               end if
+            end do
+         97 close(1)
+
+            allocate(R_setka(nstrings))
+            allocate(A(N,nstrings))
+            allocate(B(N,nstrings))
+            allocate(North(N,nstrings))
+            allocate(South(N,nstrings))
+            allocate(A_delta(N,nstrings))
+            allocate(B_delta(N,nstrings))
+            allocate(N_delta(N,nstrings))
+            allocate(S_delta(N,nstrings))
+            allocate(A_mean(nstrings))
+            allocate(B_mean(nstrings))
+            allocate(North_mean(nstrings))
+            allocate(South_mean(nstrings))
+            allocate(Adel_mean(nstrings))
+            allocate(Bdel_mean(nstrings))
+            allocate(Ndel_mean(nstrings))
+            allocate(Sdel_mean(nstrings))
+
+            open(1,file=catalog_name_out2)
+            i = 1
+            do
+               read(1,*, end=98) line_from_file
+               if ((line_from_file(1) >= R_left_border).and.(line_from_file(1) <= R_right_border)) then
+                   R_setka(i) = line_from_file(1)
+                   i = i+1
+               end if
+            end do
+         98 close(1)
+            write(*,*)R_setka
+
+            do i=1,N
+                open(1,file=catalog_name_out1(i))
+                j=0
+                do
+                    read(1,*, end=105) line_from_file
+                    if ((line_from_file(1) >= R_left_border).and.(line_from_file(1) <= R_right_border)) then
+                        j = j+1
+                        A(i,j) = line_from_file(2)
+                        A_delta(i,j) = line_from_file(3)
+                        North(i,j) = line_from_file(4)
+                        N_delta(i,j) = line_from_file(5)
+                        South(i,j) = line_from_file(6)
+                        S_delta(i,j) = line_from_file(7)
+                        B(i,j) = line_from_file(8)
+                        B_delta(i,j) = line_from_file(9)
+                     end if
+                end do
+            105 close(1)
+            end do
+
+            write(*,*) 'testtest'
+
+            write(*,*) A(:,1)
+
+            do j=1,nstrings
+                A_mean(j) = sum(A(:,j)) / N
+                B_mean(j) = sum(B(:,j)) / N
+                North_mean(j) = sum(North(:,j)) / N
+                South_mean(j) = sum(South(:,j)) / N
+                Adel_mean(j) = sum(A_delta(:,j)) / N
+                Bdel_mean(j) = sum(B_delta(:,j)) / N
+                Ndel_mean(j) = sum(N_delta(:,j)) / N
+                Sdel_mean(j) = sum(S_delta(:,j)) / N
+            end do
+
+            write(*,*) 'testtest2'
+
+            open(2, file='Main_Workspace/MD/add-files/Mean_values.dat')
+            do j=1,nstrings
+                write(2,FDE_data_format) R_setka(j), A_mean(j), Adel_mean(j), North_mean(j), &
+                                         Ndel_mean(j), South_mean(j), Sdel_mean(j), B_mean(j), Bdel_mean(j)
+            end do
+            close(2)
+         end subroutine mean_MD
 
 end module

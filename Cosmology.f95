@@ -1,5 +1,5 @@
 !=- fortran-libraries
-!=- © Stanislav Shirokov, 2014-2020
+!=- Â© Stanislav Shirokov, 2014-2020
 
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
 	module cosmology
@@ -43,7 +43,7 @@
 
 					 MS_H_0 , MS_O_v , MS_O_k , MS_w , MS_O_m_bug
 
-      character(len) :: model_set (MS_model_count,2) = ' model ' , &
+      character(length) :: model_set (MS_model_count,2) = ' model ' , &
                         model_set_path = 'model_set.dat' , model_name , MS_columns(3)='' , &
                         MS_fields(30) , MS_parameters(30)
 
@@ -181,7 +181,7 @@
 
          subroutine write_model_set
             integer i
-            character(len) title(MS_real_model_count)
+            character(length) title(MS_real_model_count)
 
                inquire( file = model_set_path , exist = file_exists )
 
@@ -292,7 +292,7 @@
                               GNUfields (title1+(i-1)*2) = ' title "' // trim( model_set (i,2) ) // '"'
                            end select
                         end do
-                     GNUfields (plot1) = GNUfields (plot1)(2:len)
+                     GNUfields (plot1) = GNUfields (plot1)(2:length)
 
                      !graph_name = MS_fields(j+9+3*(k-1)) // '-logscale'
                      !   GNUfields(extention_out_figure)='#eps' ; call plot(model_set_path)
@@ -462,7 +462,7 @@
 				end function RzwCDM
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
 			subroutine models_head(titles)
-				character(len) titles(N_titles)
+				character(length) titles(N_titles)
 	            titles(1)	='z	'										;
 	            titles(2)	='z+1'										;
 					titles(3)	='log(z+1)'									;
@@ -500,7 +500,7 @@
 				end subroutine
 
 			subroutine models_calculating(datafile)
-				character(len) datafile
+				character(length) datafile
 
 					open(1,file=datafile, status='replace');	call models_head(titles)
 						theformat='(A2,'//trim(inttostr(N_titles))//'(i2,1x,A22,1x))'
@@ -552,7 +552,7 @@
 
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
 			subroutine models(datafile)
-				character(len) datafile
+				character(length) datafile
 
                call models_calculating(datafile)
 

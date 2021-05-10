@@ -1,5 +1,5 @@
 !=- Fractal Dimension Estimation
-!=- © Stanislav Shirokov, 2014-2020
+!=- Â© Stanislav Shirokov, 2014-2020
 
 module FDE_citadel
    use FDE_config
@@ -9,7 +9,7 @@ module FDE_citadel
 
    use global
 
-   character(len) input_command , logscaling
+   character(length) input_command , logscaling
    real(8) :: start_scale = -1, final_scale = -1, scale_step = -1
 
    contains
@@ -60,8 +60,12 @@ module FDE_citadel
 							call uniform_catalog_analysis
 						case ('cca')
 							call cantor_catalog_analysis
-                  case ('sc')
-                     call Super_Cantor_analysis
+                        case ('ex1')
+                            call example1
+                        case ('meanmd')
+                            call mean_MD(2.0, 3)
+                        !case ('sc')
+                            !call Super_Cantor_analysis(2.1, 3)
 						case ('c')
 							call input_catalogs_analysis
 

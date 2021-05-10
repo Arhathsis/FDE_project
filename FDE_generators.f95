@@ -1,5 +1,5 @@
 !=- Fractal Dimension Estimation
-!=- © Stanislav Shirokov, 2014-2020
+!=- Â© Stanislav Shirokov, 2014-2020
 
 module FDE_generators
    use FDE_paths
@@ -9,7 +9,7 @@ module FDE_generators
    use cosmology
    use math
 
-   character(len) :: catalog_prefix = 'catalog' , secondary_catalog , skeleton , GCC_catalog_prefix
+   character(length) :: catalog_prefix = 'catalog' , secondary_catalog , skeleton , GCC_catalog_prefix
 
    logical ::  FDE_generator_report_flag = .true. , file_end = .false. , sphere_selection = .true. , &
                GCC_datafile = .true. , GSCS_replot = .true. , GCC_sets_regenerating , GCC_FDE_generator_report_flag, &
@@ -89,7 +89,7 @@ module FDE_generators
 
 
    	subroutine Generate_Uniform_Catalog(path)
-         character(len) path ; integer j
+         character(length) path ; integer j
 
             write(*,'(/,A)') 'GUC is started..'
 
@@ -159,12 +159,12 @@ module FDE_generators
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
 
 			subroutine catalog_loading( data_file_path , Sample )
-				character(len) data_file_path ; integer ii
+				character(length) data_file_path ; integer ii
 				real(8) Sample(:,:) ; Sample(:,:)=0d0
 
                unit_1 = random_unit()
 
-               theformat='' ; theformat='(A'//trim(inttostr(len))//')'
+               theformat='' ; theformat='(A'//trim(inttostr(length))//')'
 					open(unit_1,file=data_file_path,status='old',err=11)  !=-
 
 					ii=0
@@ -188,7 +188,7 @@ module FDE_generators
 			subroutine read_catalog_string( file_unit , Sample_string )
 				integer file_unit
 				real(8) Sample_string(:) ; Sample_string(:)=0d0
-               theformat='' ; theformat='(A'//trim(inttostr(len))//')'
+               theformat='' ; theformat='(A'//trim(inttostr(length))//')'
 
                   if (file_end) file_end=.false.
                do  													!=- size()
@@ -204,7 +204,7 @@ module FDE_generators
 
 
 
-      character(len) function make_catalog_name()
+      character(length) function make_catalog_name()
          make_catalog_name=''
          make_catalog_name = trim( folders( folder_Samples ) ) // trim(catalog_prefix) // '-' // &
             trim(adjustl(inttostr(FDE_seed))) // '_' // trim(adjustl(inttostr(generations))) // '-' // &
@@ -214,7 +214,7 @@ module FDE_generators
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
 
       subroutine Generate_Super_Cantor_Catalog(filepath)
-         character(len) filepath ; integer i , N_test
+         character(length) filepath ; integer i , N_test
          real(8) XYZ(3), FD
 
             inquire(file=slashfix(filepath), exist=file_exists)
@@ -319,7 +319,7 @@ module FDE_generators
 
 
       subroutine Generate_Cantor_Catalog(path) !=- Cantor Sets Generator
-         character(len) path ; integer i,j,k , ii,jj,kk
+         character(length) path ; integer i,j,k , ii,jj,kk
          real(8) x,y,z
          integer(1),allocatable,dimension(:,:,:) :: cube
 
@@ -383,7 +383,9 @@ module FDE_generators
 
                      counter=0
                      do ii=1,fractionality ; do jj=1,fractionality ; do kk=1,fractionality
+                        !#write(*,*)'test'
                         if ( cube(ii,jj,kk)==1 ) then
+                           !#write(*,*)'test2'
                            x = ((ii-0.5)*1d0/fractionality-0.5d0)*2
                            y = ((jj-0.5)*1d0/fractionality-0.5d0)*2
                            z = ((kk-0.5)*1d0/fractionality-0.5d0)*2
@@ -394,10 +396,14 @@ module FDE_generators
 
                            if ( distance(x,y,z) > 1d0+1.5d0/fractionality .and. sphere_selection .or. &
                            dabs(x)>1 .or. dabs(y)>1 .or. dabs(z)>1) then
+                              !#write(*,*)'test3'
                               cube(ii,jj,kk) = 0
                               else
                                  if ( dabs(x)<1 .and. dabs(y)<1 .and. dabs(z)<1 .and. .not. sphere_selection &
-                                    .or. (GCC_sphere_selection .and. distance(x,y,z)<1 ) ) counter=counter+1
+                                    .or. (GCC_sphere_selection .and. distance(x,y,z)<1 ) ) then
+                                    !#write(*,*)'test4'
+                                    counter=counter+1
+                                 endif
                               endif
                            endif
                         enddo ; enddo ; enddo

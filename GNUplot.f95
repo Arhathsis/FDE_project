@@ -1,5 +1,5 @@
 !=- fortran-libraries
-!=- © Stanislav Shirokov, 2014-2020
+!=- Â© Stanislav Shirokov, 2014-2020
 
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
 	module GNUplot
@@ -16,7 +16,7 @@
 
       real(8) :: external_parameter = 0
 
-		character(len) ::	pngterm  = 'set term pngcairo enhanced font "Verdana,12" size 1400, 1050'				, &
+		character(length) ::	pngterm  = 'set term pngcairo enhanced font "Verdana,12" size 1400, 1050'				, &
 								epsterm  = 'set term postscript enhanced color font "Verdana,14" size 8.5, 6.3'	, &
 								scriptpath  = '', figurepath  = '',	figoutput  = '', GNUdatafile = '', graph_name='', &
 								fig_dir = '', GNUplots = '', GNUscripts = '', script_file_path='', plot_dir='', &
@@ -56,13 +56,13 @@
 		contains
 
 			integer function extension(key) !=- 0 = default, 1 = eps, ...
-				character(len) key; extension=0; do i=1,len-2 ; if (key(i:i+2)=='eps') extension=1 ; enddo
+				character(length) key; extension=0; do i=1,length-2 ; if (key(i:i+2)=='eps') extension=1 ; enddo
 				end function
 
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
 
 			subroutine plot(datafile) !-=- plot autoscripting
-				character(len) datafile
+				character(length) datafile
 
                   unit_2 = random_unit()
 
@@ -121,7 +121,7 @@
 
 
       logical function GNUcorrect(field)
-         character(len) field
+         character(length) field
             GNUcorrect = .false.
             if ( field /= '' ) then
                read(field,*) line
@@ -173,7 +173,7 @@
             if ( .not. GNUcorrect( GNUfields( format_x ) ) ) &
                GNUfields( format_x ) = 'set format x "' // trim(GNUfields( format_x )) // '"'
 
-            if ( GNUfields(plot1)(1:1) == ',' ) GNUfields(plot1) = GNUfields(plot1)(2:len)
+            if ( GNUfields(plot1)(1:1) == ',' ) GNUfields(plot1) = GNUfields(plot1)(2:length)
 
          end subroutine GNUfields_fix
 

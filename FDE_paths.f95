@@ -1,10 +1,10 @@
 !=- Fractal Dimension Estimation
-!=- © Stanislav Shirokov, 2014-2020
+!=- Â© Stanislav Shirokov, 2014-2020
 
 module FDE_paths
    use global
 
-		character(len) WorkDir , path_CF2 , path_catalog_CF2 , path_2MRS , path_catalog_2MRS , &
+		character(length) WorkDir , path_CF2 , path_catalog_CF2 , path_2MRS , path_catalog_2MRS , &
                         uniform_test , fractal_test , cyrle_path , scaling_filepath , add_visible_z_out, &
                         FDE_catalog , Millennium , Galacticus , Galacticus_160_dir
 

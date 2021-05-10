@@ -1,5 +1,5 @@
 !=- Fractal Dimension Estimation
-!=- © Stanislav Shirokov, 2014-2020
+!=- Â© Stanislav Shirokov, 2014-2020
 
 module FDE_catalogs
    use FDE_paths
@@ -47,7 +47,7 @@ module FDE_catalogs
 
 
       subroutine reading(N,shift,path,data_catalog)
-         character(len) path ; integer N,shift ; real(8) data_catalog(:,:)
+         character(length) path ; integer N,shift ; real(8) data_catalog(:,:)
 
          unit_1 = random_unit()
 
@@ -64,7 +64,7 @@ module FDE_catalogs
 
 
       subroutine make_the_catalog( catalog_path , data_array , catalog_array )
-         character(len) catalog_path
+         character(length) catalog_path
          real(8) data_array(:,:),catalog_array(:,:)
 
          N_mc = size( data_array(1,:) )
