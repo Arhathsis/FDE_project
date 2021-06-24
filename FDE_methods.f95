@@ -1,5 +1,5 @@
 !=- Fractal Dimension Estimation
-!=- Â© Stanislav Shirokov, 2014-2020
+!=- © Stanislav Shirokov, 2014-2020
 
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
 
@@ -13,7 +13,8 @@
 
          logical ::  FDE_data_files_existing = .false. , &
                      FDE_method_report_flag  = .true.  , &
-                     from_zero_to_1d_50      = .true.
+                     from_zero_to_1d_50      = .true.  , &
+                     clear_means             = .false.
 
          integer,parameter :: methods_count = 4 , geometries_count = 4 , FDE_out_table_size = 100
 
@@ -24,17 +25,23 @@
 
                            FDE_method_names(methods_count)
 
-			integer ::	FDE_points_amount , FDE_grid = 20 , k_NP(geometries_count) , geometry , FDE_method
+			integer ::	FDE_points_amount , FDE_grid = 20 , k_NP(geometries_count) , geometry , FDE_method , &
+                     mean_FDE_points_amount
 
 			real(8) ::	FDE_R_min , FDE_R_max , FDE_l_min , FDE_l_max , FDE_b_min , FDE_b_max , FDE_D_min , FDE_D_max , &
 							logS , FDE_distance , R_nn(geometries_count) , FDE_LS_coefficients(geometries_count,2) , &
 							FDE_left_border , FDE_right_border , temp_XY(2,FDE_out_table_size) , &
-							FDE_left_border_MD , FDE_right_border_MD, FDE_D(geometries_count), &
+							FDE_left_border_MD , FDE_right_border_MD, FDE_D(geometries_count), mean_FDE_D(geometries_count), &
 
 							FDE_out_NP      ( 1 + 2*geometries_count , FDE_out_table_size ) , &
 							FDE_out_MD      ( 1 + 2*geometries_count , FDE_out_table_size ) , &
 							FDE_out_intCD   ( 1 + 2*geometries_count , FDE_out_table_size ) , &
 							FDE_out_diffCD  ( 1 + 2*geometries_count , FDE_out_table_size ) , &
+
+							mean_FDE_out_NP      ( 1 + 2*geometries_count , FDE_out_table_size ) , &
+							mean_FDE_out_MD      ( 1 + 2*geometries_count , FDE_out_table_size ) , &
+							mean_FDE_out_intCD   ( 1 + 2*geometries_count , FDE_out_table_size ) , &
+							mean_FDE_out_diffCD  ( 1 + 2*geometries_count , FDE_out_table_size ) , &
 
 							XYY             ( 1 + 2*geometries_count,FDE_out_table_size )
 
@@ -49,6 +56,99 @@
 
 
 			contains
+
+
+
+         subroutine FDE_means(set_number)
+            integer set_number
+
+                  if (.not. clear_means) then
+
+                     mean_FDE_out_NP      ( : , : ) = 0d0
+                     mean_FDE_out_MD      ( : , : ) = 0d0
+                     mean_FDE_out_intCD   ( : , : ) = 0d0
+                     mean_FDE_out_diffCD  ( : , : ) = 0d0
+                     mean_FDE_points_amount = 0
+
+                     clear_means = .true.
+
+                     end if
+
+                  mean_FDE_out_NP      ( 1 , : ) = FDE_out_NP      ( 1 , : )
+                  mean_FDE_out_MD      ( 1 , : ) = FDE_out_MD      ( 1 , : )
+                  mean_FDE_out_intCD   ( 1 , : ) = FDE_out_intCD   ( 1 , : )
+                  mean_FDE_out_diffCD  ( 1 , : ) = FDE_out_diffCD  ( 1 , : )
+
+						mean_FDE_out_NP      ( 2: , : ) = mean_FDE_out_NP      ( 2: , : ) + &
+                                                         FDE_out_NP      ( 2: , : ) * 1d0 / set_number
+                  mean_FDE_out_MD      ( 2: , : ) = mean_FDE_out_MD      ( 2: , : ) + &
+                                                         FDE_out_MD      ( 2: , : ) * 1d0 / set_number
+                  mean_FDE_out_intCD   ( 2: , : ) = mean_FDE_out_intCD   ( 2: , : ) + &
+                                                         FDE_out_intCD   ( 2: , : ) * 1d0 / set_number
+                  mean_FDE_out_diffCD  ( 2: , : ) = mean_FDE_out_diffCD  ( 2: , : ) + &
+                                                         FDE_out_diffCD  ( 2: , : ) * 1d0 / set_number
+
+                  mean_FDE_points_amount = mean_FDE_points_amount + FDE_points_amount * 1d0 / set_number
+
+            end subroutine
+
+
+         character(length) function cutting_datafile_name(path)
+            character(length) path
+            integer i, n_de
+
+            i=length ; n_de=0 ; cutting_datafile_name = ''
+
+            do while (n_de<3)
+               i=i-1
+               if (path(i:i)=='_') n_de = 1 + n_de
+               if (n_de==3) cutting_datafile_name = path(i:length)
+               end do
+
+            end function cutting_datafile_name
+
+
+
+         subroutine write_means
+
+            FDE_data_files_paths(1) = trim(folders( folder_Statistics_add_files )) // 'mean_NP' &
+               // trim( cutting_datafile_name(FDE_data_files_paths(1)) )
+            FDE_data_files_paths(2) = trim(folders( folder_Statistics_add_files )) // 'mean_MD' &
+               // trim( cutting_datafile_name(FDE_data_files_paths(2)) )
+            FDE_data_files_paths(3) = trim(folders( folder_Statistics_add_files )) // 'mean_intCD' &
+               // trim( cutting_datafile_name(FDE_data_files_paths(3)) )
+            FDE_data_files_paths(4) = trim(folders( folder_Statistics_add_files )) // 'mean_diffCD' &
+               // trim( cutting_datafile_name(FDE_data_files_paths(4)) )
+
+            unit_1 = random_unit()
+
+            open(unit_1,file=FDE_data_files_paths(1),status='replace')
+               write(unit_1,FDE_data_format) mean_FDE_out_NP
+            close(unit_1)
+
+            open(unit_1,file=FDE_data_files_paths(2),status='replace')
+               write(unit_1,FDE_data_format) mean_FDE_out_MD
+            close(unit_1)
+
+            open(unit_1,file=FDE_data_files_paths(3),status='replace')
+               write(unit_1,FDE_data_format) mean_FDE_out_intCD
+            close(unit_1)
+
+            open(unit_1,file=FDE_data_files_paths(4),status='replace')
+               write(unit_1,FDE_data_format) mean_FDE_out_diffCD
+            close(unit_1)
+
+            end subroutine
+
+
+
+         subroutine default_means
+
+            clear_means = .false.
+
+            end subroutine
+
+
 
 			subroutine geometries_making
             integer i

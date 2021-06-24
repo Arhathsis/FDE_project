@@ -1,5 +1,5 @@
 !=- Fractal Dimension Estimation
-!=- Â© Stanislav Shirokov, 2014-2020
+!=- © Stanislav Shirokov, 2014-2020
 
 module FDE_generators
    use FDE_paths
@@ -383,9 +383,7 @@ module FDE_generators
 
                      counter=0
                      do ii=1,fractionality ; do jj=1,fractionality ; do kk=1,fractionality
-                        !#write(*,*)'test'
                         if ( cube(ii,jj,kk)==1 ) then
-                           !#write(*,*)'test2'
                            x = ((ii-0.5)*1d0/fractionality-0.5d0)*2
                            y = ((jj-0.5)*1d0/fractionality-0.5d0)*2
                            z = ((kk-0.5)*1d0/fractionality-0.5d0)*2
@@ -396,14 +394,10 @@ module FDE_generators
 
                            if ( distance(x,y,z) > 1d0+1.5d0/fractionality .and. sphere_selection .or. &
                            dabs(x)>1 .or. dabs(y)>1 .or. dabs(z)>1) then
-                              !#write(*,*)'test3'
                               cube(ii,jj,kk) = 0
                               else
                                  if ( dabs(x)<1 .and. dabs(y)<1 .and. dabs(z)<1 .and. .not. sphere_selection &
-                                    .or. (GCC_sphere_selection .and. distance(x,y,z)<1 ) ) then
-                                    !#write(*,*)'test4'
-                                    counter=counter+1
-                                 endif
+                                    .or. (GCC_sphere_selection .and. distance(x,y,z)<1 ) ) counter=counter+1
                               endif
                            endif
                         enddo ; enddo ; enddo

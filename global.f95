@@ -1,5 +1,5 @@
 !=- fortran-libraries
-!=- Â© Stanislav Shirokov, 2014-2020
+!=- © Stanislav Shirokov, 2014-2020
 
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
 	module global
@@ -9,7 +9,7 @@
 
       logical :: file_exists , index_info , write_percent_fix
 
-		integer,parameter :: length=256,  N_col_GRB = 90, N_GRB=7d3, & !=- constants
+		integer,parameter :: length=256,  len=256, N_col_GRB = 90, N_GRB=7d3, & !=- constants
 			N_titles = 57, N_comparisons = 4, N_files = 20, N_folders = 10 !=- 3+6*N_models
 
 		integer ::  i,ii,iii,j,jj,jjj,k,kk,kkk,n,nn,nnn,m,mm,mmm, &
@@ -43,8 +43,6 @@
             call system(' echo $SHELL  >> system.log')
                line = read_last_string('system.log')
                if ( line == '/bin/bash'  ) operating_system = 2
-
-            operating_system = 2
 
             select case (operating_system)
                case(1)  !=-   Windows
@@ -209,8 +207,6 @@
 
 			logical function word_search(line,goal)   !=- of only the first word - ?
 				character(length) word,line ; character(*) goal ; word_search = .false.
-               !write(*,*) 'test (line): ', line
-               !write(*,*) 'test (word): ', word
                read(line,*) word
                if (word==goal) word_search = .true.
 				end function

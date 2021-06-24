@@ -1,5 +1,5 @@
 !=- Fractal Dimension Estimation
-!=- Â© Stanislav Shirokov, 2014-2020
+!=- © Stanislav Shirokov, 2014-2020
 
 module FDE_scripts
 	use math
@@ -23,7 +23,7 @@ module FDE_scripts
 
 
 
-      subroutine mean_dimension
+      subroutine means
 
                   !=- R_nn(geometries_count)
 						!=- FDE_out_NP      ( 1 + 2*geometries_count , FDE_out_table_size ) , &
@@ -31,8 +31,66 @@ module FDE_scripts
                   !=- FDE_out_intCD   ( 1 + 2*geometries_count , FDE_out_table_size ) , &
                   !=- FDE_out_diffCD  ( 1 + 2*geometries_count , FDE_out_table_size ) , &
 
+                                  FDE_recalculating = .true.
+                              GCC_sets_regenerating = .true.
+                                        GSCS_replot = .true.
+                               GCC_sphere_selection = .true.
+
+                                 GCC_catalog_prefix = 'Scantor'
+                                 GCC_FDE_seed_order = 1
+
+                              GCC_Fractal_Dimension = 2.25      !=- Milli-Millennium: 2.2     !=- it is may make as an multi-fractal array
+                        GCC_Super_Fractal_Dimension = 2.25     !=- Milli-Millennium: 1.35
+
+                                    GCC_generations = 6        !=- Milli-Millennium: 5
+                              GCC_Super_generations = 5        !=- Milli-Millennium: 6
+
+                     GCC_uniform_approach_parameter = 1        !=- Milli-Millennium: 1
+               GCC_Super_uniform_approach_parameter = 0        !=- Milli-Millennium: 0
+
+                                   GCC_radius_limit = 160d0     !=- Milli-Millennium: 31
+                                       GCC_N_points = 2.1d4    !=- Milli-Millennium: 28k
+
+                                    FDE_left_border = 3
+                                   FDE_right_border = GCC_radius_limit*0.5d0
+
+                                 FDE_left_border_MD = GCC_radius_limit*0.01d0
+                                FDE_right_border_MD = GCC_radius_limit*0.5d0
+
+                                          RDR_z_max = 0.1  !=- to need automatize
+                                           FDE_grid = 100
+                                         set_number = 10
+
+            call creating_means
+            call default_means
+
          end subroutine
 
+
+
+         subroutine creating_means
+            integer i
+
+            do i=1,set_number ; write(*,*) 'FDE_means: ', i
+                  call GCC_default ; call make_FDE_seed
+               GCC_catalog_name = trim( make_catalog_name() )
+
+               call Generate_Super_Cantor_Catalog(GCC_catalog_name)
+
+                  if (GSCS_replot) call plot_catalog ( skeleton )
+                  if (GSCS_replot) call plot_catalog ( GCC_catalog_name )
+
+               call FDE_complex  ( GCC_catalog_name )
+               call FDE_GNUplots
+
+               call FDE_means(set_number)
+
+            enddo
+
+               call write_means
+               call plot_means
+
+            end subroutine
 
 
 		subroutine input_catalogs_analysis
@@ -54,12 +112,12 @@ module FDE_scripts
 
                FDE_seed_order = 2
 
-               generations = 3
+               generations = 8
                Fractal_Dimension = 2.2
             !read(*,*) Fractal_Dimension
                N_points = 26d3
 
-               radius_limit = 110d0
+               radius_limit = 31d0
                FDE_recalculating = .true.
 
                FDE_left_border   = 1.6
@@ -77,9 +135,9 @@ module FDE_scripts
                catalog_name = trim( make_catalog_name() )
                   call Generate_Cantor_Catalog(catalog_name)   !=- input: exact the pathname of datafile
 
-                  call plot_catalog ( catalog_name )
+                  !call plot_catalog ( catalog_name )
                   call FDE_complex  ( catalog_name )
-                  call FDE_GNUplots
+                  !call FDE_GNUplots
 
                   enddo
 
@@ -147,7 +205,7 @@ module FDE_scripts
                   z = start_scale + i*scale_step
                   write(unit_1,'(F10.5,4(1x,F10.1))') z , R_LCDM(z,H70) , D_LCDM(z,H70) , R_LCDM(z,H100) , D_LCDM(z,H100)
                   end do
-
+!df
                end if
 
             close(unit_1)
@@ -587,11 +645,13 @@ module FDE_scripts
          subroutine Super_Cantor_analysis(D, N, catalog_name_out)
             character(length), allocatable, dimension(:), intent(out) :: catalog_name_out
             integer :: peremennaya_cycla
-            allocate(catalog_name_out(N))
+            real(8) D
 
-                                  FDE_recalculating = .false.
-                              GCC_sets_regenerating = .false.
-                                        GSCS_replot = .false.
+               allocate(catalog_name_out(N))
+
+                                  FDE_recalculating = .true.
+                              GCC_sets_regenerating = .true.
+                                        GSCS_replot = .true.
                                GCC_sphere_selection = .true.
 
                                  GCC_catalog_prefix = 'Scantor_task1'
@@ -610,12 +670,12 @@ module FDE_scripts
                                        GCC_N_points = 1d4    !=- Milli-Millennium: 28k
 
                                     FDE_left_border = 3
-                                   FDE_right_border = 15
+                                   FDE_right_border = GCC_radius_limit*0.5d0
 
-                                 FDE_left_border_MD = 2
-                                FDE_right_border_MD = 20
+                                 FDE_left_border_MD = GCC_radius_limit*0.01d0
+                                FDE_right_border_MD = GCC_radius_limit*0.5d0
 
-                                          RDR_z_max = 0.01  !=- to need automatize
+                                          RDR_z_max = 0.1  !=- to need automatize
                                            FDE_grid = 100
                                          set_number = N
 
@@ -633,24 +693,8 @@ module FDE_scripts
                call FDE_GNUplots
             enddo
 
-         !GCC_N_points = 1d3
-         !GCC_FDE_seed_order = 3
-
-         !do i=1,set_number
-         !         call GCC_default ; call make_FDE_seed
-         !      GCC_catalog_name = trim( make_catalog_name() )
-
-         !      call Generate_Super_Cantor_Catalog(GCC_catalog_name)
-                  !=- if (GSCS_replot) call plot_catalog ( skeleton )
-         !         if (GSCS_replot) call plot_catalog ( GCC_catalog_name )
-
-         !      call FDE_complex  ( GCC_catalog_name )
-         !      call FDE_GNUplots
-         !enddo
-        !#omp end do
-        !#omp end parallel
-
             end subroutine
+
 
 
          subroutine example1
@@ -667,6 +711,8 @@ module FDE_scripts
 
          end subroutine example1
 
+
+
          subroutine mean_MD(D, N)
             real(8), allocatable, dimension(:) :: Rmin, Rmax, R_setka, A_mean, B_mean, North_mean, &
                                                   South_mean, Adel_mean, Bdel_mean, Ndel_mean, Sdel_mean
@@ -674,24 +720,25 @@ module FDE_scripts
             real(8), dimension(9) :: line_from_file
             character(length), allocatable, dimension(:) :: catalog_name_out1
             character(length) :: catalog_name_out2
-            real(8) :: R_right_border, R_left_border
-            integer :: nstrings
-            allocate(catalog_name_out1(N))
-            allocate(Rmin(N))
-            allocate(Rmax(N))
+            real(8) :: R_right_border, R_left_border , D !=- the input parameters must be declared!
+            integer :: i,j,N,nstrings    !=- yes, the inner cycle indexes must be declared
+
+            allocate( catalog_name_out1(N) , Rmin(N) , Rmax(N) )
+
             call Super_Cantor_analysis(D, N, catalog_name_out1)
+
             do i=1,N
                write(*,*) catalog_name_out1(i)
             enddo
 
             do i=1,N
-               catalog_name_out2 = catalog_name_out1(i)
-               catalog_name_out2 = catalog_name_out2(23:53)
+               !catalog_name_out2 = catalog_name_out1(i)
+               !catalog_name_out2 = catalog_name_out2(23:53)
                catalog_name_out2 = 'Main_Workspace/MD/add-files'//trim(catalog_name_out2)//'_100_MD.dat'
                catalog_name_out1(i) = catalog_name_out2
                write(*,*)catalog_name_out2
 
-               open(1,file=catalog_name_out2)
+               open(1,file=catalog_name_out2,status='replace') !=- just in case, the open's status should be typed
                read(1,*) line_from_file
                Rmin(i) = line_from_file(1)
                do
@@ -742,7 +789,7 @@ module FDE_scripts
                end if
             end do
          98 close(1)
-            write(*,*)R_setka
+            write(*,*) R_setka
 
             do i=1,N
                 open(1,file=catalog_name_out1(i))
@@ -764,7 +811,7 @@ module FDE_scripts
             105 close(1)
             end do
 
-            write(*,*) 'testtest'
+            write(*,*) 'testtest'   !=- here, the pause command can be used, e.g. pause 1, pause 23, etc.
 
             write(*,*) A(:,1)
 
@@ -781,12 +828,14 @@ module FDE_scripts
 
             write(*,*) 'testtest2'
 
-            open(2, file='Main_Workspace/MD/add-files/Mean_values.dat')
+            open(2, file='Main_Workspace/MD/add-files/Mean_values.dat',status='replace')
             do j=1,nstrings
                 write(2,FDE_data_format) R_setka(j), A_mean(j), Adel_mean(j), North_mean(j), &
                                          Ndel_mean(j), South_mean(j), Sdel_mean(j), B_mean(j), Bdel_mean(j)
             end do
             close(2)
          end subroutine mean_MD
+
+
 
 end module
