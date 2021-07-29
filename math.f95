@@ -1,5 +1,5 @@
 !=- fortran-libraries
-!=- Â© Stanislav Shirokov, 2014-2020
+!=- © Stanislav Shirokov, 2014-2020
 
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
 	module math
@@ -278,41 +278,89 @@ if ( abs(mx) < 1 ) write(*,*) 'bad solution'
 
 
 
-subroutine EclCoord(RA,Dec,l2,b2) != from galactic to ecliptical ==================================1
-implicit none ;real(8) RA,RA2,Dec,l,l2,b,b2,RAl,Decl,l0,pi,r,d
-   pi=4*datan(1d0);l0=32.93192+90;RAl=192.858333;Decl=27.128333/180d0*pi;b=b2/180d0*pi;l=l2/180d0*pi
-   Dec=dasin(dsin(Decl)*dsin(b)+dcos(Decl)*dcos(b)*dcos(l0/180d0*pi-l))
-   RA=dasin( dcos(b)*dsin(l0/180d0*pi-l)/dcos(Dec) )
-   RA2=( ( dcos(Decl)*dsin(b)-dsin(Decl)*dcos(b)*dcos(l0/180d0*pi-l) )/dcos(Dec) )
-   Dec=Dec*180d0/pi;if (RA2.le.0) RA=pi-RA;RA=RA*180d0/pi-RAl + 25.71667480468742d0;if (RA.le.0) RA=RA+360
-end subroutine EclCoord !==========================================================================1
+         subroutine EclCoord(RA,Dec,l2,b2) !=- from galactic to ecliptical -=1
+            real(8) RA,RA2,Dec,l,l2,b,b2,RAl,Decl,l0,pi,r,d
+               pi   = 4*datan(1d0)
+               l0   = 32.93192 + 90d0
+               RAl  = 192.858333
+               Decl = 27.128333/180d0*pi
+               b    = b2/180d0*pi
+               l    = l2/180d0*pi
+               Dec = dasin( dsin(Decl) * dsin(b) + dcos(Decl) * dcos(b) * dcos( l0/180d0*pi - l ))
+               RA  = dasin( dcos(b)    * dsin( l0/180d0*pi - l )/dcos(Dec) )
+               RA2 = ( dcos(Decl) * dsin(b) - dsin(Decl) * dcos(b) * dcos( l0/180d0*pi - l ) )/dcos(Dec)
+               Dec = Dec*180d0/pi
+               if (RA2<=0) RA = pi - RA
+               RA  = RA*180d0/pi - RAl + 25.71667480468742
+               if (RA <=0) RA = RA + 360d0
+            end subroutine EclCoord
 
-subroutine GalCoord(RA,Dec,l,b) != from ecliptical to galactic ====================================1
-implicit none ;real(8) RA,Dec,l,l2,b,RAl,Decl,l0,pi,r,d
-   pi=4*datan(1d0);l0=32.93192+90;RAl=192.858333/180d0*pi;Decl=27.128333/180d0*pi
-   r=RA;d=Dec;RA=RA/180d0*pi;Dec=Dec/180d0*pi;b=dasin(dsin(Dec)*dsin(Decl)+dcos(Dec)*dcos(Decl)*dcos(RA-RAl))
-   l=dasin(dcos(Dec)*dsin(RA-RAl)/dcos(b));l2=(dcos(Decl)*dsin(Dec)-dsin(Decl)*dcos(Dec)*dcos(RA-RAl))/dcos(b)
-   if (l2.le.0) l=pi-l;l=l0-l*180d0/pi;if (l.le.0) l=l+360;RA=r;Dec=d;b=b*180d0/pi
-end subroutine GalCoord !==========================================================================1
 
-subroutine SphCoord(x,y,z,b,l,r) != from x,y,z to a,b,r ===========================================1
-   real(8) x,y,z,l,b,r  !=- b -> l , l -> b, =1
-      r=dsqrt(x**2+y**2+z**2);if (r==0) then ; l=0; b=0; goto 11 ; else ; l=datan(z/dsqrt(x**2+y**2))
-      if (x.gt.0.and.y.ge.0) b=datan(y/x);if (x.lt.0) b=pi+datan(y/x) ; if (x.gt.0 .and. y.lt.0) b=2*pi+datan(y/x)
-      if (x==0.and.y.gt.0) b=pi/2;if (x==0.and.y.lt.0) b=3d0*pi/2 ; endif; 11 continue
-      l=l*180d0/pi ; b=b*180d0/pi
-end subroutine !===================================================================================1
 
-subroutine SphCoord_radians(x,y,z,l,b,r) != from x,y,z to a,b,r ===========================================1
-   real(8) x,y,z,l,b,r
-      r=dsqrt(x**2+y**2+z**2);if (r==0) then ; l=0; b=0; goto 11 ; else ; l=datan(z/dsqrt(x**2+y**2))
-      if (x.gt.0.and.y.ge.0) b=datan(y/x);if (x.lt.0) b=pi+datan(y/x) ; if (x.gt.0 .and. y.lt.0) b=2*pi+datan(y/x)
-      if (x==0.and.y.gt.0) b=pi/2;if (x==0.and.y.lt.0) b=3d0*pi/2 ; endif; 11 continue
-end subroutine !===================================================================================1
+         subroutine GalCoord(RA,Dec,l,b) !=- from ecliptical to galactic -=1
+            real(8) RA,Dec,l,l2,b,RAl,Decl,l0,pi,r,d
+               pi   = 4*datan(1d0)
+               l0   = 32.93192 + 90d0
+               RAl  = 192.858333 / 180d0*pi
+               Decl = 27.128333  / 180d0*pi
+            r=RA ; d=Dec
+               RA  = RA/180d0*pi
+               Dec = Dec/180d0*pi
+               b   = dasin( dsin(Dec) * dsin(Decl) + dcos(Dec) * dcos(Decl) * dcos( RA - RAl ) )
+               l   = dasin( dcos(Dec) * dsin( RA - RAl ) / dcos(b)                             )
+               l2  = ( dcos(Decl) * dsin(Dec) - dsin(Decl) * dcos(Dec) * dcos( RA - RAl ) )/dcos(b)
 
-subroutine DescCoord(a,b,r,x,y,z) != from a,b,r to x,y,z ==========================================1
-implicit none ; real(8) x,y,z,a,b,r ; x=r*dcos(a)*dcos(b) ; y=r*dcos(a)*dsin(b);z=r*dsin(a)
-end subroutine !===================================================================================1
+               if (l2<=0) l = pi - l
+               l   = l0 - l*180d0/pi
+               if (l <=0) l = l+360d0
+               b   = b*180d0/pi
+            RA=r ; Dec=d
+            end subroutine GalCoord
+
+
+
+         subroutine SphCoord(x,y,z,b,l,r) !=- from x,y,z to a,b,r -=1
+            real(8) x,y,z,l,b,r  !=- b -> l , l -> b, valid -=1
+               r = dsqrt( x**2 + y**2 + z**2 )
+               l=0 ; b=0
+               if (r.ne.0) then
+                  l = datan( z/dsqrt( x**2 + y**2 ) )
+                  if ( x>0  .and. y>=0 ) b = datan( y/x )
+                  if ( x<0             ) b = pi + datan( y/x )
+                  if ( x>0  .and. y<0  ) b = 2*pi+datan( y/x )
+                  if ( x==0 .and. y>0  ) b = pi/2
+                  if ( x==0 .and. y<0  ) b = 3d0*pi/2
+                  endif
+               l = l * 180d0/pi
+               b = b * 180d0/pi
+            end subroutine
+
+
+
+         subroutine SphCoord_radians(x,y,z,l,b,r) !=- from x,y,z to a,b,r -=1
+            real(8) x,y,z,l,b,r
+               r = dsqrt( x**2 + y**2 + z**2 )
+               l=0 ; b=0
+               if (r.ne.0) then
+                  l = datan( z/dsqrt( x**2 + y**2 ) )
+                  if ( x>0  .and. y>=0 ) b = datan(y/x)
+                  if ( x<0             ) b = pi+datan(y/x)
+                  if ( x>0  .and. y<0  ) b = 2*pi+datan(y/x)
+                  if ( x==0 .and. y>0  ) b = pi/2
+                  if ( x==0 .and. y<0  ) b = 3d0*pi/2
+                  endif
+            end subroutine
+
+
+
+         subroutine DescCoord(a,b,r,x,y,z) !=- from a,b,r to x,y,z -=1
+            real(8) x,y,z,a,b,r
+               x = r * dcos(a) * dcos(b)
+               y = r * dcos(a) * dsin(b)
+               z = r * dsin(a)
+            end subroutine
+
+
 
    end module
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
