@@ -265,7 +265,7 @@ module FDE_graphs
                GNUfields(title)   =  'set title "catalog: ' // trim(name(catalog_path)) // ' \'
 					GNUfields(title+1) 		=	'\n X vs Y plan \'
 
-					GNUfields(title+2) 	=	'\n N = '//trim(inttostrf(final_counter,10))// &
+					GNUfields(title+2) 	=	'\\n N = '//trim(inttostrf(final_counter,10))// &
                   ', D = '//trim(realtostrf(Fractal_Dimension,3,1))//' " noenhanced'
 					GNUfields(xlabel)		=	'Y, [Mpc]'
 					GNUfields(ylabel)		=	'X, [Mpc]'
@@ -287,7 +287,7 @@ module FDE_graphs
 
 
 
-					GNUfields(title+1) 		=	'\n X vs Z plan \'
+					GNUfields(title+1) 		=	'\\n X vs Z plan \'
 					GNUfields(xlabel)		=	'Z, [Mpc]'
 					GNUfields(ylabel)		=	'X, [Mpc]'
 
@@ -302,7 +302,7 @@ module FDE_graphs
 
 
 
-					GNUfields(title+1)		=	'\n Y vs Z plan \'
+					GNUfields(title+1)		=	'\\n Y vs Z plan \'
 					GNUfields(xlabel)		=	'Z, [Mpc]'
 					GNUfields(ylabel)		=	'Y, [Mpc]'
 
@@ -319,7 +319,7 @@ module FDE_graphs
 
 					GNUfields(xrange)		=	'[*:*]'
 					GNUfields(yrange)		=	'[*:*]'
-					GNUfields(title+1)		=	'\n m vs R plan \'
+					GNUfields(title+1)		=	'\\n m vs R plan \'
 					GNUfields(xlabel)		=	'R, [Mpc]'
 					GNUfields(ylabel)		=	'm'
 
@@ -333,7 +333,7 @@ module FDE_graphs
 
 
 
-					GNUfields(title+1)		=	'\n M vs R plan \'
+					GNUfields(title+1)		=	'\\n M vs R plan \'
 					GNUfields(xlabel)		=	'R, [Mpc]'
 					GNUfields(ylabel)		=	'M'
 
@@ -347,7 +347,7 @@ module FDE_graphs
 
 
 
-					GNUfields(title+1)		=	'\n R vs z plan \'
+					GNUfields(title+1)		=	'\\n R vs z plan \'
 					GNUfields(xlabel)		=	'z'
 					GNUfields(ylabel)		=	'R, [Mpc]'
 
@@ -361,7 +361,7 @@ module FDE_graphs
 
 
 
-					GNUfields(title+1)		=	'\n L vs R plan \'
+					GNUfields(title+1)		=	'\\n L vs R plan \'
 					GNUfields(xlabel)		=	'R, [Mpc]'
 					GNUfields(ylabel)		=	'L, [erg]'
 					GNUfields(logscale)  =  '#set logscale y'

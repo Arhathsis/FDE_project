@@ -5,7 +5,7 @@
 	module global
 		implicit none
 
-      integer ::  operating_system  =  0   !=- 1 Windows, 2 Linux
+      integer ::  operating_system  =  2   !=- 1 Windows, 2 Linux
 
       logical :: file_exists , index_info , write_percent_fix
 
@@ -44,6 +44,7 @@
                line = read_last_string('system.log')
                if ( line == '/bin/bash'  ) operating_system = 2
 
+            operating_system = 2
             select case (operating_system)
                case(1)  !=-   Windows
                   write(*,*) 'OS: Windows_NT'

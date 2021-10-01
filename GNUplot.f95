@@ -104,7 +104,7 @@
                      call GNUfields_fix
                   write(unit_2,*) 'set output "'//trim(slashfix(figoutput))//'"'
                      do i=1,plot1-1
-                        write(unit_2,'(A)') trim(GNUfields(i))
+                        if (GNUfields(i).ne.'') write(unit_2,'(A)') trim(GNUfields(i))
                         enddo
 						!write(9,*) 'plot "<echo -1 10**'//trim(realtostr(GNUnorm))//'" w p ls 10 notitle \'
 						write(unit_2,*) 'plot ',( trim(GNUfields(i)) , i = plot1 , N_GNUfields )
