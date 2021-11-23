@@ -21,9 +21,19 @@ module FDE_scripts
 
 	contains
 
+      subroutine means_matrix
 
+         do iloop=0,5
+            do jloop=1,4
+                call means(2d0, 5000 + iloop*2000, jloop*5)
+            end do
+         end do
 
-      subroutine means
+      end subroutine
+
+      subroutine means(D_arg, N_arg, ls_arg)
+         real(8), intent(in) :: D_arg
+         integer, intent(in) :: N_arg, ls_arg
 
                   !=- R_nn(geometries_count)
 						!=- FDE_out_NP      ( 1 + 2*geometries_count , FDE_out_table_size ) , &
@@ -39,8 +49,8 @@ module FDE_scripts
                                  GCC_catalog_prefix = 'Scantor'
                                  GCC_FDE_seed_order = 1
 
-                              GCC_Fractal_Dimension = 2.25      !=- Milli-Millennium: 2.2     !=- it is may make as an multi-fractal array
-                        GCC_Super_Fractal_Dimension = 2.25     !=- Milli-Millennium: 1.35
+                              GCC_Fractal_Dimension = D_arg      !=- Milli-Millennium: 2.2     !=- it is may make as an multi-fractal array
+                        GCC_Super_Fractal_Dimension = D_arg     !=- Milli-Millennium: 1.35
 
                                     GCC_generations = 6        !=- Milli-Millennium: 5
                               GCC_Super_generations = 5        !=- Milli-Millennium: 6
@@ -49,27 +59,27 @@ module FDE_scripts
                GCC_Super_uniform_approach_parameter = 0        !=- Milli-Millennium: 0
 
                                    GCC_radius_limit = 160d0     !=- Milli-Millennium: 31
-                                       GCC_N_points = 2.1d4    !=- Milli-Millennium: 28k
+                                       GCC_N_points = N_arg    !=- Milli-Millennium: 28k
 
-                                    FDE_left_border = 3
-                                   FDE_right_border = GCC_radius_limit*0.5d0
+                                    FDE_left_border = 20
+                                   FDE_right_border = 50
 
-                                 FDE_left_border_MD = GCC_radius_limit*0.01d0
-                                FDE_right_border_MD = GCC_radius_limit*0.5d0
+                                 FDE_left_border_MD = GCC_radius_limit / 2**(GCC_generations+GCC_Super_generations-2)
+                                FDE_right_border_MD = GCC_radius_limit
 
                                           RDR_z_max = 0.1  !=- to need automatize
                                            FDE_grid = 100
-                                         set_number = 10
+                                         set_number = ls_arg
 
-            call creating_means
+            call creating_means(set_number)
             call default_means
 
          end subroutine
 
 
 
-         subroutine creating_means
-            integer i
+         subroutine creating_means(set_number)
+            integer i, set_number
 
             do i=1,set_number ; write(*,*) 'FDE_means: ', i
                   call GCC_default ; call make_FDE_seed
@@ -87,7 +97,7 @@ module FDE_scripts
 
             enddo
 
-               call write_means
+               call write_means(set_number)
                call plot_means
 
             end subroutine
@@ -836,6 +846,76 @@ module FDE_scripts
             close(2)
          end subroutine mean_MD
 
+         subroutine create_table_of_means(D_left, D_right, D_amount, N_left, N_right, N_amount, ls_left, ls_right, ls_amount)
 
+            integer, intent(in) :: D_amount, N_left, N_right, N_amount, ls_left, ls_right, ls_amount
+            real(8), intent(in) :: D_left, D_right
+            integer, dimension(N_amount) :: N_mass
+            real(8), dimension(D_amount) :: D_mass
+            integer, dimension(ls_amount) :: ls_mass
+            real(8), dimension(D_amount,N_amount,ls_amount,geometries_count) :: table
+
+            if (D_amount == 1) then
+                D_mass(1) = D_left
+            else
+                do iloop = 1,D_amount
+                    D_mass(iloop) = D_left + (iloop - 1) * (D_right - D_left) / (D_amount - 1)
+                end do
+            end if
+
+            do jloop = 1,N_amount
+                N_mass(jloop) = floor(10 ** (log10(N_left * 1.0) + (jloop - 1)&
+                 * (log10(N_right * 1.0) - log10(N_left * 1.0)) / (N_amount - 1)) + 0.5)
+            end do
+
+            do kloop = 1,ls_amount
+                ls_mass(kloop) = floor(10 ** (log10(ls_left * 1.0) + (kloop - 1)&
+                 * (log10(ls_right * 1.0) - log10(ls_left * 1.0)) / (ls_amount - 1)) + 0.5)
+            end do
+
+            do iloop = 1,D_amount
+                do jloop = 1,N_amount
+                    do kloop = 1,ls_amount
+                        call means(D_mass(iloop), N_mass(jloop), ls_mass(kloop))
+                        table(iloop,jloop,kloop,1) = FDE_D(1)
+                        table(iloop,jloop,kloop,2) = FDE_D(2)
+                        table(iloop,jloop,kloop,3) = FDE_D(3)
+                        table(iloop,jloop,kloop,4) = FDE_D(4)
+                    end do
+                end do
+            end do
+
+            do iloop = 1,D_amount
+                open(3, file='Main_Workspace/Statistics/add-files/D_table_' //&
+                 trim(realtostr(D_mass(iloop))) // '_A.dat',status='replace')
+                write(3,*) 'ls|N', N_mass
+                do jloop = 1,ls_amount
+                    write(3,*) ls_mass(jloop), table(iloop,:,jloop,1)
+                end do
+                close(3)
+                open(4, file='Main_Workspace/Statistics/add-files/D_table_' //&
+                 trim(realtostr(D_mass(iloop))) // '_N.dat',status='replace')
+                write(4,*) 'ls|N', N_mass
+                do jloop = 1,ls_amount
+                    write(4,*) ls_mass(jloop), table(iloop,:,jloop,2)
+                end do
+                close(4)
+                open(5, file='Main_Workspace/Statistics/add-files/D_table_' //&
+                 trim(realtostr(D_mass(iloop))) // '_S.dat',status='replace')
+                write(5,*) 'ls|N', N_mass
+                do jloop = 1,ls_amount
+                    write(5,*) ls_mass(jloop), table(iloop,:,jloop,3)
+                end do
+                close(5)
+                open(6, file='Main_Workspace/Statistics/add-files/D_table_' //&
+                 trim(realtostr(D_mass(iloop))) // '_B.dat',status='replace')
+                write(6,*) 'ls|N', N_mass
+                do jloop = 1,ls_amount
+                    write(6,*) ls_mass(jloop), table(iloop,:,jloop,4)
+                end do
+                close(6)
+            end do
+
+end subroutine create_table_of_means
 
 end module

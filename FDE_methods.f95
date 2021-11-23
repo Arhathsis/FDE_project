@@ -109,16 +109,20 @@
 
 
 
-         subroutine write_means
+         subroutine write_means(set_number)
+            integer, intent(in) :: set_number
+            character(20) :: set_number_str
 
-            FDE_data_files_paths(1) = trim(folders( folder_Statistics_add_files )) // 'mean_NP' &
-               // trim( cutting_datafile_name(FDE_data_files_paths(1)) )
-            FDE_data_files_paths(2) = trim(folders( folder_Statistics_add_files )) // 'mean_MD' &
-               // trim( cutting_datafile_name(FDE_data_files_paths(2)) )
-            FDE_data_files_paths(3) = trim(folders( folder_Statistics_add_files )) // 'mean_intCD' &
-               // trim( cutting_datafile_name(FDE_data_files_paths(3)) )
-            FDE_data_files_paths(4) = trim(folders( folder_Statistics_add_files )) // 'mean_diffCD' &
-               // trim( cutting_datafile_name(FDE_data_files_paths(4)) )
+            write(set_number_str,'(i0)') set_number
+
+            FDE_data_files_paths(1) = trim(folders( folder_Statistics_add_files )) // 'mean_NP_' &
+               // trim(set_number_str) // trim( cutting_datafile_name(FDE_data_files_paths(1)) )
+            FDE_data_files_paths(2) = trim(folders( folder_Statistics_add_files )) // 'mean_MD_' &
+               // trim(set_number_str) // trim( cutting_datafile_name(FDE_data_files_paths(2)) )
+            FDE_data_files_paths(3) = trim(folders( folder_Statistics_add_files )) // 'mean_intCD_' &
+               // trim(set_number_str) // trim( cutting_datafile_name(FDE_data_files_paths(3)) )
+            FDE_data_files_paths(4) = trim(folders( folder_Statistics_add_files )) // 'mean_diffCD_' &
+               // trim(set_number_str) // trim( cutting_datafile_name(FDE_data_files_paths(4)) )
 
             unit_1 = random_unit()
 

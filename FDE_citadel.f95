@@ -53,7 +53,11 @@ module FDE_citadel
                            endif
 
 						case ('m')
-							call means
+							call means(2d0, 5000, 3)
+                        case ('mm')
+							call means_matrix
+                        case ('mmt')
+                            call create_table_of_means(2d0, 2d0, 1, 5000, 15000, 5, 5, 20, 4)
 						case ('exit')
 							goto 11
 						case ('help')

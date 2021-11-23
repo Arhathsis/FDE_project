@@ -12,7 +12,7 @@
 		integer,parameter :: length=256,  len=256, N_col_GRB = 90, N_GRB=7d3, & !=- constants
 			N_titles = 57, N_comparisons = 4, N_files = 20, N_folders = 10 !=- 3+6*N_models
 
-		integer ::  i,ii,iii,j,jj,jjj,k,kk,kkk,n,nn,nnn,m,mm,mmm, &
+		integer ::  i,ii,iii,j,jj,jjj,k,kk,kkk,n,nn,nnn,m,mm,mmm,iloop,jloop,kloop, &
                   unit_1 = 1, unit_2 = 2, unit_3 = 3 , unit_4 = 4 , unit_5 = 5 , unit_6 = 6  , unit_7 = 7 , &
                   counter , final_counter , iostat_value , i_percent , N_percent , mod_percent = 10 , m_percent
 
