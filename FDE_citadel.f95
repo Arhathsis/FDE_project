@@ -1,5 +1,5 @@
 !=- Fractal Dimension Estimation
-!=- Â© Stanislav Shirokov, 2014-2020
+!=- © Stanislav Shirokov, 2014-2020
 
 module FDE_citadel
    use FDE_config
@@ -10,7 +10,9 @@ module FDE_citadel
    use global
 
    character(length) input_command , logscaling
-   real(8) :: start_scale = -1, final_scale = -1, scale_step = -1
+   real(8) :: start_scale = -1, final_scale = -1, scale_step = -1, mean_MD_D = 2.0
+
+   integer :: mean_MD_N = 10
 
    contains
 
@@ -50,8 +52,12 @@ module FDE_citadel
                               call scaling(start_scale, final_scale, scale_step , logscaling)
                            endif
 
-						case ('cg')
-							!call compaire_graphics
+						case ('m')
+							call means(2d0, 5000, 3)
+                        case ('mm')
+							call means_matrix
+                        case ('mmt')
+                            call create_table_of_means(2d0, 2d0, 1, 5000, 15000, 5, 5, 20, 4)
 						case ('exit')
 							goto 11
 						case ('help')
@@ -60,14 +66,22 @@ module FDE_citadel
 							call uniform_catalog_analysis
 						case ('cca')
 							call cantor_catalog_analysis
-                        case ('ex1')
-                            call example1
-                        case ('meanmd')
-                            call mean_MD(2.0, 3)
-                        !case ('sc')
-                            !call Super_Cantor_analysis(2.1, 3)
+
+                  case ('ex1')
+                     call example1
+                  case ('meanmd0')
+                     call mean_MD(2.0d0, 3)  !=- subroutine's input parameters should be as variables (see below)
+                  case ('meanmd')
+                     read(input_command,*,iostat=iostat_value) command,mean_MD_D,mean_MD_N
+                     call mean_MD( mean_MD_D, mean_MD_N )  !=- the input command's format: 'meanmd 2 3'
+
 						case ('c')
 							call input_catalogs_analysis
+
+                  case ('os')
+                     read(input_command,*,iostat=iostat_value) command,operating_system
+                     text1='Windows' ; if (operating_system==2) text1='Linux'
+                     write(*,*) 'The operating system has been changed to ', trim(text1)
 
                   case ('avz')
                      read(input_command,*,iostat=iostat_value) command,command1,command2

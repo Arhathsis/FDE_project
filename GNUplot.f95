@@ -1,5 +1,5 @@
 !=- fortran-libraries
-!=- Â© Stanislav Shirokov, 2014-2020
+!=- © Stanislav Shirokov, 2014-2020
 
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
 	module GNUplot
@@ -56,7 +56,7 @@
 		contains
 
 			integer function extension(key) !=- 0 = default, 1 = eps, ...
-				character(length) key; extension=0; do i=1,length-2 ; if (key(i:i+2)=='eps') extension=1 ; enddo
+				character(length) key; extension=0; do i=1,len-2 ; if (key(i:i+2)=='eps') extension=1 ; enddo
 				end function
 
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
@@ -104,7 +104,7 @@
                      call GNUfields_fix
                   write(unit_2,*) 'set output "'//trim(slashfix(figoutput))//'"'
                      do i=1,plot1-1
-                        write(unit_2,'(A)') trim(GNUfields(i))
+                        if (GNUfields(i).ne.'') write(unit_2,'(A)') trim(GNUfields(i))
                         enddo
 						!write(9,*) 'plot "<echo -1 10**'//trim(realtostr(GNUnorm))//'" w p ls 10 notitle \'
 						write(unit_2,*) 'plot ',( trim(GNUfields(i)) , i = plot1 , N_GNUfields )
