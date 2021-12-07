@@ -1,5 +1,5 @@
 !=- Fractal Dimension Estimation
-!=- Â© Stanislav Shirokov, 2014-2020
+!=- © Stanislav Shirokov, 2014-2020
 
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
 
@@ -11,30 +11,42 @@
 		use FDE_paths
 		use FDE_generators
 
+
          logical ::  FDE_data_files_existing = .false. , &
                      FDE_method_report_flag  = .true.  , &
-                     from_zero_to_1d_50      = .true.
+                     from_zero_to_1d_50      = .true.  , &
+                     clear_means             = .false.
 
          integer,parameter :: methods_count = 4 , geometries_count = 4 , FDE_out_table_size = 100
+
+			integer ::	FDE_points_amount , FDE_grid = 100 , k_NP(geometries_count) , geometry , FDE_method , &
+                     mean_FDE_points_amount , &
+                     FDE_method_NP = 1 , FDE_method_MD = 2 , FDE_method_intCD = 3 , FDE_method_diffCD = 4
+
+         integer(8),allocatable,dimension(:,:) :: working_volumes , FDE_diffCD , FDE_MD , FDE_NP
 
          character(length) :: NP_name = '_NP.dat' , MD_name = '_MD.dat' , diffCD_name = '_DiffCD.dat' , &
                            intCD_name = '_IntCD.dat' , FDE_data_file_path , FDE_data_format , &
                            FDE_NP_data_file_path , FDE_MD_data_file_path , FDE_IntCD_data_file_path , &
                            FDE_DiffCD_data_file_path , FDE_data_files_paths(methods_count) , &
 
-                           FDE_method_names(methods_count)
-
-			integer ::	FDE_points_amount , FDE_grid = 20 , k_NP(geometries_count) , geometry , FDE_method
+                           FDE_method_names(methods_count) , FDE_geometry_mask(geometries_count)
 
 			real(8) ::	FDE_R_min , FDE_R_max , FDE_l_min , FDE_l_max , FDE_b_min , FDE_b_max , FDE_D_min , FDE_D_max , &
 							logS , FDE_distance , R_nn(geometries_count) , FDE_LS_coefficients(geometries_count,2) , &
 							FDE_left_border , FDE_right_border , temp_XY(2,FDE_out_table_size) , &
-							FDE_left_border_MD , FDE_right_border_MD, FDE_D(geometries_count), &
+							FDE_left_border_MD , FDE_right_border_MD, FDE_D(methods_count,geometries_count), &
+							mean_FDE_D(methods_count,geometries_count), &
 
 							FDE_out_NP      ( 1 + 2*geometries_count , FDE_out_table_size ) , &
 							FDE_out_MD      ( 1 + 2*geometries_count , FDE_out_table_size ) , &
 							FDE_out_intCD   ( 1 + 2*geometries_count , FDE_out_table_size ) , &
 							FDE_out_diffCD  ( 1 + 2*geometries_count , FDE_out_table_size ) , &
+
+							mean_FDE_out_NP      ( 1 + 2*geometries_count , FDE_out_table_size ) , &
+							mean_FDE_out_MD      ( 1 + 2*geometries_count , FDE_out_table_size ) , &
+							mean_FDE_out_intCD   ( 1 + 2*geometries_count , FDE_out_table_size ) , &
+							mean_FDE_out_diffCD  ( 1 + 2*geometries_count , FDE_out_table_size ) , &
 
 							XYY             ( 1 + 2*geometries_count,FDE_out_table_size )
 
@@ -44,16 +56,108 @@
 
          real(8),allocatable,dimension(:) :: Radii , Volumes
 
-         integer(8),allocatable,dimension(:,:) :: working_volumes , FDE_diffCD , FDE_MD , FDE_NP
-
 
 
 			contains
 
+         subroutine FDE_means(set_number)
+            integer set_number
+
+                  if (.not. clear_means) then
+
+                     mean_FDE_out_NP      ( : , : ) = 0d0
+                     mean_FDE_out_MD      ( : , : ) = 0d0
+                     mean_FDE_out_intCD   ( : , : ) = 0d0
+                     mean_FDE_out_diffCD  ( : , : ) = 0d0
+                     mean_FDE_points_amount = 0
+                     mean_FDE_D(:,:) = 0d0
+
+                     clear_means = .true.
+
+                     end if
+
+                  mean_FDE_out_NP      ( 1 , : ) = FDE_out_NP      ( 1 , : )
+                  mean_FDE_out_MD      ( 1 , : ) = FDE_out_MD      ( 1 , : )
+                  mean_FDE_out_intCD   ( 1 , : ) = FDE_out_intCD   ( 1 , : )
+                  mean_FDE_out_diffCD  ( 1 , : ) = FDE_out_diffCD  ( 1 , : )
+
+						mean_FDE_out_NP      ( 2: , : ) = mean_FDE_out_NP      ( 2: , : ) + &
+                                                         FDE_out_NP      ( 2: , : ) * 1d0 / set_number
+                  mean_FDE_out_MD      ( 2: , : ) = mean_FDE_out_MD      ( 2: , : ) + &
+                                                         FDE_out_MD      ( 2: , : ) * 1d0 / set_number
+                  mean_FDE_out_intCD   ( 2: , : ) = mean_FDE_out_intCD   ( 2: , : ) + &
+                                                         FDE_out_intCD   ( 2: , : ) * 1d0 / set_number
+                  mean_FDE_out_diffCD  ( 2: , : ) = mean_FDE_out_diffCD  ( 2: , : ) + &
+                                                         FDE_out_diffCD  ( 2: , : ) * 1d0 / set_number
+
+                  mean_FDE_points_amount = mean_FDE_points_amount + FDE_points_amount * 1d0 / set_number
+
+                  mean_FDE_D(:,:) = mean_FDE_D(:,:) + FDE_D(:,:) / set_number
+
+            end subroutine
+
+
+         character(length) function cutting_datafile_name(path)
+            character(length) path
+            integer i, n_de
+
+            i=length ; n_de=0 ; cutting_datafile_name = ''
+
+            do while (n_de<3)
+               i=i-1
+               if (path(i:i)=='_') n_de = 1 + n_de
+               if (n_de==3) cutting_datafile_name = path(i:length)
+               end do
+
+            end function cutting_datafile_name
+
+
+
+         subroutine write_means
+
+            FDE_data_files_paths(1) = trim(folders( folder_Statistics_add_files )) // 'mean_NP_' &
+               // trim(adjustl(inttostr(FDE_sequence_length))) // trim( cutting_datafile_name(FDE_data_files_paths(1)) )
+            FDE_data_files_paths(2) = trim(folders( folder_Statistics_add_files )) // 'mean_MD_' &
+               // trim(adjustl(inttostr(FDE_sequence_length))) // trim( cutting_datafile_name(FDE_data_files_paths(2)) )
+            FDE_data_files_paths(3) = trim(folders( folder_Statistics_add_files )) // 'mean_intCD_' &
+               // trim(adjustl(inttostr(FDE_sequence_length))) // trim( cutting_datafile_name(FDE_data_files_paths(3)) )
+            FDE_data_files_paths(4) = trim(folders( folder_Statistics_add_files )) // 'mean_diffCD_' &
+               // trim(adjustl(inttostr(FDE_sequence_length))) // trim( cutting_datafile_name(FDE_data_files_paths(4)) )
+
+            unit_1 = random_unit()
+
+            open(unit_1,file=trim(FDE_data_files_paths(1)),status='replace')
+               write(unit_1,FDE_data_format) mean_FDE_out_NP
+            close(unit_1)
+
+            open(unit_1,file=FDE_data_files_paths(2),status='replace')
+               write(unit_1,FDE_data_format) mean_FDE_out_MD
+            close(unit_1)
+
+            open(unit_1,file=FDE_data_files_paths(3),status='replace')
+               write(unit_1,FDE_data_format) mean_FDE_out_intCD
+            close(unit_1)
+
+            open(unit_1,file=FDE_data_files_paths(4),status='replace')
+               write(unit_1,FDE_data_format) mean_FDE_out_diffCD
+            close(unit_1)
+
+            end subroutine
+
+
+
+         subroutine default_means
+
+            clear_means = .false.
+
+            end subroutine
+
+
+
 			subroutine geometries_making
             integer i
 
-					if (FDE_R_min<=0) FDE_R_min = radius_limit*1d-3
+					if (FDE_R_min<=0) FDE_R_min = radius_limit*1d-4
 					if (FDE_R_max<=0) FDE_R_max = radius_limit
 					FDE_D_min = 2*FDE_R_min
 					FDE_D_max = 2*FDE_R_max
@@ -113,7 +217,7 @@
 
                FDE_data_file_path = name(data_file_path)
                FDE_data_format = '(' // trim(inttostr(2*geometries_count+1)) // '(E16.8))'
-               if (FDE_grid<2) FDE_grid=20
+               if (FDE_grid<2) FDE_grid=100
                   call FDE_create_names
 
 					FDE_points_amount = file_volume( data_file_path )
@@ -322,15 +426,15 @@
 
                   do method = 2,methods_count
                      FDE_method = method
-                     call FDE_trend_log_xy( FDE_data_files_paths(method) )
+                     if (FDE_method/=1) call FDE_trend_log_xy( FDE_data_files_paths(method) )
                      if ( FDE_method==3 .or. FDE_method==4 ) then
-                        FDE_D(:) = 3d0+FDE_LS_coefficients(:,1)
+                        FDE_D(method,:) = 3d0+FDE_LS_coefficients(:,1)
                         else
-                           FDE_D(:) = FDE_LS_coefficients(:,1)
+                           FDE_D(method,:) = FDE_LS_coefficients(:,1)
                         endif
 
                      write(*,'(3x,A,i1,A,A)') 'method_' , method , ': ' , trim(FDE_method_names(method))
-                     write(*,'(3x,A,i1,A,F8.2)') ( 'D_e,' , i , ':' , FDE_D(i) , i=1,geometries_count )
+                     write(*,'(3x,A,i1,A,F8.2)') ( 'D_e,' , i , ':' , FDE_D(method,i) , i=1,geometries_count )
                      enddo
                   end if
 
@@ -343,8 +447,45 @@
                   FDE_out_intCD   (:,:)=XYY(:,:)
                call read_FDE_data_file(FDE_data_files_paths(4))
                   FDE_out_diffCD  (:,:)=XYY(:,:)
+
             end subroutine FDE_export
 
+
+			subroutine FDE_trend_log_xy( data_file_path )
+            character(length) data_file_path ; integer i , j , k ; real(8) lb,rb
+
+               lb = FDE_approximation_ranges(1,FDE_method)
+               rb = FDE_approximation_ranges(2,FDE_method)
+
+            call FDE_read_R_nn
+
+            call read_FDE_data_file(data_file_path)
+
+				temp_XY(:,:)=0d0 ; FDE_LS_coefficients(:,:)=0d0
+				forall (j=1:FDE_out_table_size , XYY(1,j)>0 ) temp_XY(1,j)=log10(XYY(1,j))
+				do i=1,geometries_count
+               forall (j=1:FDE_out_table_size , XYY(2*i,j)>0 ) temp_XY(2,j)=log10( XYY(2*i,j) )
+
+					k=0;sumx=0d0;sumx2=0d0;sumy=0d0;sumxy=0d0
+
+					do j=1,FDE_out_table_size
+                  if ( temp_XY(2,j) .ne. 0d0 .and. temp_XY(2,j) .ne. log10(1d-50) .and. &
+                     temp_XY(1,j).ge.log10(lb) .and. temp_XY(1,j).le.log10(rb) ) then   !		write(*,*) N,G(1,j),G(2,j),XY(1,j),XY(2,j)
+
+                     sumx=sumx+temp_XY(1,j) ; sumx2=sumx2+temp_XY(1,j)**2d0
+                     sumy=sumy+temp_XY(2,j) ; sumxy=sumxy+temp_XY(1,j)*temp_XY(2,j)
+                     k=k+1
+
+                     endif
+                  enddo
+
+					if (k.ne.0) then
+                  FDE_LS_coefficients(i,1)=( k*sumxy-sumx*sumy ) / ( k*sumx2-sumx**2 )
+                  FDE_LS_coefficients(i,2)=( sumy - FDE_LS_coefficients(i,1)*sumx ) / k
+                  endif
+
+					enddo
+				end subroutine
 
 
          subroutine FDE_create_names
@@ -377,7 +518,7 @@
                   if ( XYY(2*j,i) == maximum ) R_nn(j) = XYY(1,i)   !=- R_nn ~ (V / N)^{1/3}
 
                   end do
-               end do             !=-  write(*,*) (pi*4/3*radius_limit**3/N_points)**0.33, R_nn
+               end do             !=-  write(*,*) (pi*4/3*radius_limit**3/target_point_number)**0.33, R_nn
                FDE_out_NP(:,:) = XYY(:,:)
             end subroutine FDE_read_R_nn
 
@@ -425,7 +566,7 @@
             open(unit_1,file=FDE_NP_data_file_path,status='replace')
 
                do i=1,FDE_grid
-                 if ( Nearest_Neighbores(1,i)>0 .and. Nearest_Neighbores(2,i)>1d-50) &
+                 if ( Nearest_Neighbores(1,i)>0 .and. Nearest_Neighbores(1,i)>1d-50) &
                      write(unit_1,FDE_data_format) Radii(i), &
                         Nearest_Neighbores(1,i), Dispersion_NP(1,i)**0.5, &
                         Nearest_Neighbores(2,i), Dispersion_NP(2,i)**0.5, &
@@ -446,7 +587,7 @@
             open(unit_2,file=FDE_MD_data_file_path,status='replace')
 
                do i=1,FDE_grid
-                  if (Mutual_Distances(1,i)>0 .and. Mutual_Distances(2,i)>1d-50)  &
+                  if (Mutual_Distances(1,i)>0 .and. Mutual_Distances(1,i)>1d-50)  &
                      write(unit_2,FDE_data_format) 2*Radii(i),   &
                         Mutual_Distances(1,i), Dispersion_MD(1,i)**0.5, &
                         Mutual_Distances(2,i), Dispersion_MD(2,i)**0.5, &
@@ -467,7 +608,7 @@
             open(unit_3,file=FDE_IntCD_data_file_path,status='replace')
 
                do i=1,FDE_grid
-               if (Integral_Density(1,i)>0 .and. Integral_Density(2,i)>1d-50)  &
+               if (Integral_Density(1,i)>0 .and. Integral_Density(1,i)>1d-50)  &
                   write(unit_3,FDE_data_format) Radii(i),   &
                      Integral_Density(1,i), Dispersion_intCD(1,i)**0.5, &
                      Integral_Density(2,i), Dispersion_intCD(2,i)**0.5, &
@@ -482,7 +623,7 @@
             open(unit_4,file=FDE_DiffCD_data_file_path,status='replace')
 
                do i=1,FDE_grid
-               if (Differential_Density(1,i)>0 .and. Differential_Density(2,i)>1d-50)  &
+               if (Differential_Density(1,i)>0 .and. Differential_Density(1,i)>1d-50)  &
                   write(unit_4,FDE_data_format) Radii(i),   &
                      Differential_Density(1,i), Dispersion_diffCD(1,i)**0.5, &
                      Differential_Density(2,i), Dispersion_diffCD(2,i)**0.5, &
@@ -516,53 +657,18 @@
 
 
 
-			subroutine FDE_trend_log_xy( data_file_path )
-            character(length) data_file_path ; integer i , j , k ; real(8) lb,rb
-
-            if (FDE_method==2) then !=- case
-               lb=FDE_left_border_MD
-               rb=FDE_right_border_MD
-               else
-                  lb=FDE_left_border
-                  rb=FDE_right_border
-            end if
-
-            call FDE_read_R_nn
-
-            call read_FDE_data_file(data_file_path)
-
-				temp_XY(:,:)=0d0 ; FDE_LS_coefficients(:,:)=0d0
-				forall (j=1:FDE_out_table_size , XYY(1,j)>0 ) temp_XY(1,j)=log10(XYY(1,j))
-				do i=1,geometries_count
-               forall (j=1:FDE_out_table_size , XYY(2*i,j)>0 ) temp_XY(2,j)=log10( XYY(2*i,j) )
-
-					k=0;sumx=0d0;sumx2=0d0;sumy=0d0;sumxy=0d0
-
-					do j=1,FDE_out_table_size
-                  if ( temp_XY(2,j) .ne. 0d0 .and. temp_XY(2,j) .ne. log10(1d-50) .and. &
-                     temp_XY(1,j).ge.log10(lb) .and. temp_XY(1,j).le.log10(rb) ) then   !		write(*,*) N,G(1,j),G(2,j),XY(1,j),XY(2,j)
-
-                     sumx=sumx+temp_XY(1,j) ; sumx2=sumx2+temp_XY(1,j)**2d0
-                     sumy=sumy+temp_XY(2,j) ; sumxy=sumxy+temp_XY(1,j)*temp_XY(2,j)
-                     k=k+1
-
-                     endif
-                  enddo
-
-					if (k.ne.0) then
-                  FDE_LS_coefficients(i,1)=( k*sumxy-sumx*sumy ) / ( k*sumx2-sumx**2 )
-                  FDE_LS_coefficients(i,2)=( sumy - FDE_LS_coefficients(i,1)*sumx ) / k
-                  endif
-
-					enddo
-				end subroutine
-
-
-
 			subroutine FDE_variation_log_xy( data_file_path )   !=- have not been written
             character(length) data_file_path
 
 				end subroutine
+
+         subroutine geometry_texts
+            FDE_geometry_mask(:)=''
+            FDE_geometry_mask(1) = 'all sphere'
+            FDE_geometry_mask(2) = 'north hemisphere'
+            FDE_geometry_mask(3) = 'south hemisphere'
+            FDE_geometry_mask(4) = 'both north and south hemispheres'
+            end subroutine
 
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
 

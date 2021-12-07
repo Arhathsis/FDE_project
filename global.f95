@@ -1,5 +1,5 @@
 !=- fortran-libraries
-!=- Â© Stanislav Shirokov, 2014-2020
+!=- © Stanislav Shirokov, 2014-2020
 
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
 	module global
@@ -9,8 +9,8 @@
 
       logical :: file_exists , index_info , write_percent_fix
 
-		integer,parameter :: length=256,  N_col_GRB = 90, N_GRB=7d3, & !=- constants
-			N_titles = 57, N_comparisons = 4, N_files = 20, N_folders = 10 !=- 3+6*N_models
+		integer,parameter :: length=512,  len=512, N_col_GRB = 90, N_GRB=7d3, & !=- constants
+			N_titles = 57, N_comparisons = 4, N_files = 20, N_folders = 10 , N_commands = 10 !=- 3+6*N_models
 
 		integer ::  i,ii,iii,j,jj,jjj,k,kk,kkk,n,nn,nnn,m,mm,mmm, &
                   unit_1 = 1, unit_2 = 2, unit_3 = 3 , unit_4 = 4 , unit_5 = 5 , unit_6 = 6  , unit_7 = 7 , &
@@ -20,7 +20,9 @@
                         input='', output='', line='',preformat='',path='',head_format='', &
                         text1='',text2='',text3='',text4='',text5='', command='',figure_number='', &
                         files(N_files)='',new_files(N_files)='', folders(N_folders), &
-                        system_commands(10), command1, command2, filepath='', columns, filename=''
+                        system_commands(10), command1, command2, filepath='', columns, filename='', commandN(N_commands)
+
+      real(8),parameter :: NaN = 1d150
 
 		real(8) a,b,bbb,d,e,g,l,t,tx,ty,nx,ny,aa,bb,vva,vvb,q,p,sa,sb,ssa,ssb,sm, lb,rb, &
 			x,xx,xxx, y,yy,yyy, z,zz,zzz, w,ww,www, v,vv,vvv,r, maximum, &
@@ -35,16 +37,15 @@
 
 
          subroutine define_system
+            character(length) :: line = '' , system_log_file = 'system.log'
 
-            call system(' echo %OS% > system.log')
-               line = read_last_string('system.log')
+            call system(' echo %OS% > ' // trim(system_log_file))
+               line = read_last_string(system_log_file)
                if ( line == 'Windows_NT' ) operating_system = 1
 
-            call system(' echo $SHELL  >> system.log')
-               line = read_last_string('system.log')
+            call system(' echo $SHELL  >> ' // trim(system_log_file))
+               line = trim( read_last_string(system_log_file) )
                if ( line == '/bin/bash'  ) operating_system = 2
-
-            operating_system = 2
 
             select case (operating_system)
                case(1)  !=-   Windows
@@ -75,12 +76,13 @@
 
 
          character(length) function read_last_string(log_pathfile)
-            character(*) log_pathfile
+            character(length) log_pathfile
                read_last_string = ''
                         unit_1 = random_unit()
             open(       unit_1,file=log_pathfile,status='old',err=22)
                do ; read(    unit_1,*,end=11) read_last_string ; enddo
-               22 continue ; write(*,*) 'error: read_last_string: file ',trim(log_pathfile),' does not exist'
+               22 continue ; write(*,*) 'read_last_string critical error: read_last_string: file ', &
+                  trim(log_pathfile),' does not exist'
                11 continue ; close(   unit_1)
             end function
 
@@ -108,18 +110,19 @@
 
 
          character(length) function make_workdir()
+            character(length) :: line = '' , log_file = 'log.log'
 
             select case (operating_system)
                case(1)  !=-   Windows
 
-                  call system( 'echo %cd% > log.log' )
-                  line = read_last_string('log.log')
+                  call system( 'echo %cd% > ' // trim(log_file) )
+                  line = read_last_string(log_file)
                   make_workdir = file_path(line)
 
                case(2)  !=-   Linux
 
-                  call system( 'echo $PWD > log.log' )
-                  line = read_last_string('log.log')
+                  call system( 'echo $PWD > ' // trim(log_file) )
+                  line = read_last_string(log_file)
                   make_workdir = file_path(line)
 
                case default   !=-   Other
@@ -131,7 +134,13 @@
 
 
          character(length) function name(path)
-            character(length) path; call file_name(path,ii,jj); name=''; name=path(ii:jj)
+            character(length) path ; integer ii,jj
+               call file_name(path,ii,jj); name=''; name=path(ii:jj)
+            end function
+
+         character(len) function name_ext(path)
+            character(len) path; integer ii,jj
+               call file_name(path,ii,jj); name_ext=''; name_ext=path(ii:len)
             end function
 
 			subroutine file_name(path,l1,l2) !-=- file path excision
@@ -141,8 +150,7 @@
 				end subroutine file_name
 
 			character(length) function file_path(path) !-=- file name excision
-            integer i
-				character(length) path ; integer l1,l2
+				character(length) path ; integer l1 , l2 , i
 					do i=length,1,-1 ; if (path(i:i)=='\'.or.path(i:i)=='/') then ; l1=i ; exit ; endif ; enddo
                file_path='' ; file_path = path(1:l1)
 				end function
@@ -152,7 +160,8 @@
 				end function inttostr
 
 			character(length) function inttostrf(integer_number,order) !=- Convert an integer to string
-				integer integer_number,order ; theformat='(i'// trim(inttostr(order)) //')'
+				integer integer_number,order ; character(length) theformat
+               theformat='(i'// trim(inttostr(order)) //')'
 					write(inttostrf,theformat) integer_number
 				end function inttostrf
 
@@ -165,14 +174,14 @@
 				end function realtostrE
 
 			character(length) function realtostrf(real_number,order,mantissa) !=- Convert an format real to string
-				real(8) real_number ; integer order,mantissa
+				real(8) real_number ; integer order,mantissa ; character(length) theformat
 					theformat='(F'// trim(inttostr(order)) //'.'// trim(inttostr(mantissa)) //')'
 					write(realtostrf,theformat) real_number
 				end function realtostrf
 
 			character(length) function realtostrff(real_number,theformat) !=- INVALID
 				real(8) real_number ; character(length) theformat
-					write(realtostrff,trim(theformat)) real_number
+					write(realtostrff,'('//trim(theformat)//')') real_number
 				end function realtostrff
 
 			integer function file_volume(file_path)
@@ -209,8 +218,6 @@
 
 			logical function word_search(line,goal)   !=- of only the first word - ?
 				character(length) word,line ; character(*) goal ; word_search = .false.
-               !write(*,*) 'test (line): ', line
-               !write(*,*) 'test (word): ', word
                read(line,*) word
                if (word==goal) word_search = .true.
 				end function
@@ -220,28 +227,44 @@
          subroutine shell_MD_Tree
             integer i
                do i=1,size(folders(:))
-                  call create_folder(folders(i))
+                  if (folders(i).ne.'NaN') call create_folder(folders(i))
                   enddo
             end subroutine shell_MD_Tree
 
 
 
          subroutine move_file(whence,here)
-            character(*) whence , here
+            character(len) whence , here
                select case (operating_system)
                   case(1)  !=-   Windows
                      whence = backslashfix(whence)
                        here = backslashfix(here)
-                     if ( whence.ne.'' .and. here.ne.'' ) call system( 'move ' // trim(whence) // &
-                        ' ' // trim(here)  // ' >> log.log ' )
+                     if ( whence.ne.'' .and. here.ne.'' .and. whence.ne.'NaN' .and. here.ne.'NaN' ) &
+                        call system( 'move ' // trim(whence) // ' ' // trim(here)  // ' >> log.log ' )
                   case(2)  !=-   Linux
                      whence = slashfix(whence)
                        here = slashfix(here)
-                     if ( whence.ne.'' .and. here.ne.'' ) call system( 'mv ' // trim(whence) // &
-                        ' ' // trim(here)  // ' >> log.log ' )
+                     if ( whence.ne.'' .and. here.ne.'' .and. whence.ne.'NaN' .and. here.ne.'NaN' ) &
+                        call system( 'mv ' // trim(whence) // ' ' // trim(here)  // ' >> log.log ' )
                   end select
             end subroutine
 
+
+         subroutine copy_file(whence,here)
+            character(len) whence , here
+               select case (operating_system)
+                  case(1)  !=-   Windows
+                     whence = backslashfix(whence)
+                       here = backslashfix(here)
+                     if ( whence.ne.'' .and. here.ne.'' .and. whence.ne.'NaN' .and. here.ne.'NaN' ) &
+                        call system( 'copy ' // trim(whence) // ' ' // trim(here)  // ' >> log.log ' )
+                  case(2)  !=-   Linux
+                     whence = slashfix(whence)
+                       here = slashfix(here)
+                     if ( whence.ne.'' .and. here.ne.'' .and. whence.ne.'NaN' .and. here.ne.'NaN' ) &
+                     call system( 'cp ' // trim(whence) // ' ' // trim(here)  // ' >> log.log ' )
+                  end select
+            end subroutine
 
 
          subroutine create_folder(path_folder)

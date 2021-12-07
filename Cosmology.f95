@@ -1,5 +1,5 @@
 !=- fortran-libraries
-!=- Â© Stanislav Shirokov, 2014-2020
+!=- © Stanislav Shirokov, 2014-2020
 
 !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- truncated=136-=1
 	module cosmology
@@ -15,7 +15,7 @@
                   MS_grid           = 2d2 , &
                   MS_model_count    = 1d2
 
-		integer ::  N_grid            = 2d2 , &
+		integer ::  N_cosmogrid       = 2d2 , &
                   N_RDR_grid_mode   = 3   , &   !=- progression power
                   RDR_type          = 1   , &   !=- 0 is LCDM(0.3,70) , 1 is LCDM(\O_m,H_0) , 2 is wCDM(w,\O_m,H_0,O_k)
                   MS_real_model_count
@@ -509,8 +509,8 @@
                      enddo
 						write(1,theformat) '# ',(j,titles(j),j=1,N_titles)
 
-						do i=1,N_grid
-							z = dsqrt(z_max)/N_grid * i!(i+0.01d0)
+						do i=1,N_cosmogrid
+							z = dsqrt(z_max)/N_cosmogrid * i!(i+0.01d0)
 							z = z*z
 
 							LumDist(1)	= d_LCDM (z,H_0)					         ; MetrDist(1)	= r_LCDM (z,H_0)

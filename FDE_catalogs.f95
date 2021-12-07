@@ -1,5 +1,5 @@
 !=- Fractal Dimension Estimation
-!=- Â© Stanislav Shirokov, 2014-2020
+!=- © Stanislav Shirokov, 2014-2020
 
 module FDE_catalogs
    use FDE_paths
@@ -7,6 +7,8 @@ module FDE_catalogs
 
    use math
    use Cosmology
+
+   character(length) :: catalog_name , catalog_path
 
    integer,parameter :: N_CF2 = 8188, N_col_CF2 = 40, N_2MRS = 43533, N_col_2MRS = 22
 
@@ -91,9 +93,9 @@ module FDE_catalogs
 						catalog_array( N_col_cat_l ,i )	,	catalog_array( N_col_cat_b ,i )	,	catalog_array( N_col_cat_dl,i )	, &   !=- Mpc
                   catalog_array( N_col_cat_x ,i )	,	catalog_array( N_col_cat_y ,i )	,	catalog_array( N_col_cat_z ,i )	)
 
-					if (data_array( N_col_rs	,i )==0) &
+					if (data_array( N_col_cat_rs	,i )==0) &
 						catalog_array( N_col_cat_rs	,i ) = fun_from_R_to_z(catalog_array(	N_col_cat_dl	,i	))	!=- default = 0
-					if (data_array( N_col_R		,i )==0) &
+					if (data_array( N_col_cat_R		,i )==0) &
 						catalog_array( N_col_cat_dl	,i ) = fun_from_z_to_R(catalog_array(	N_col_cat_rs	,i	),7d1)	!=- default = 0
 
                write(unit_2,catalog_format) (catalog_array(j,i),j=1,N_col_std)

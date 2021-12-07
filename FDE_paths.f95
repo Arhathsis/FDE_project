@@ -1,12 +1,12 @@
 !=- Fractal Dimension Estimation
-!=- Â© Stanislav Shirokov, 2014-2020
+!=- © Stanislav Shirokov, 2014-2020
 
 module FDE_paths
    use global
 
 		character(length) WorkDir , path_CF2 , path_catalog_CF2 , path_2MRS , path_catalog_2MRS , &
-                        uniform_test , fractal_test , cyrle_path , scaling_filepath , add_visible_z_out, &
-                        FDE_catalog , Millennium , Galacticus , Galacticus_160_dir
+                        uniform_test , fractal_test , cyrle_path , scaling_filepath , &
+                        FDE_catalog , Millennium , Galacticus , Galacticus_160_dir , paper_name , overleaf_dir
 
       integer ::     folder_Samples                   = 1   , &
                      folder_NP_add_files              = 2   , &
@@ -14,8 +14,7 @@ module FDE_paths
                      folder_MD_add_files              = 4   , &
                      folder_Statistics_add_files      = 5   , &
                      folder_Statistics_Report_tables  = 6   , &
-                     folder_Catalogue_add_files       = 7   , &
-                     folder_Samples_add_visible_z     = 8
+                     folder_Catalogue_add_files       = 7
 
 		contains
 
@@ -49,7 +48,6 @@ module FDE_paths
             folders( folder_Statistics_add_files      )  = trim(WorkDir) //'Statistics/add-files/'
             folders( folder_Statistics_Report_tables  )  = trim(WorkDir) //'Statistics/Report_tables/'
             folders( folder_Catalogue_add_files       )  = trim(WorkDir) //'Catalogue/add-files/'
-            folders( folder_Samples_add_visible_z     )  = trim(WorkDir) //'Samples/add_visible_z/'
 
             end subroutine gen_paths
 

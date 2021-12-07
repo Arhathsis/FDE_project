@@ -1,12 +1,15 @@
 !=- Fractal Dimension Estimation
-!=- Â© Stanislav Shirokov, 2014-2020
+!=- © Stanislav Shirokov, 2014-2020
 
 module FDE_config
    use global
 
-   logical ::  sets_regenerating = .false. , &  !=- .true. | .false.
-               FDE_recalculating = .false.  , &
-               FDE_replot        = .false.      !=- have not been written yet
+   logical ::  sets_regenerating       = .true. , &  !=- .true. | .false.
+               FDE_recalculating       = .true. , &
+               FDE_replot              = .true. , &     !=- have not been written yet
+
+               !=- uniform selection of points on each generation
+               FDE_selected_generators = .true.     !=- working time is longer with .true. (that it is logically) , in 2 times
 
    integer ::  luminosity_model = 0  !=- 0 is uniform geometry (default), 1 is functions, 2 is ...
 
@@ -17,7 +20,8 @@ module FDE_config
                longitude_limit      =  -1          !=- the covering in longitude degrees, without = -1
 
    integer,parameter :: N_col_std = 10, N_col_cat_x = 1, N_col_cat_y = 2, N_col_cat_z = 3, N_col_cat_l = 4, &
-		N_col_cat_b = 5, N_col_cat_dl = 6, N_col_cat_Lum = 7, N_col_cat_mag = 8, N_col_cat_M = 9, N_col_cat_rs = 10
+		N_col_cat_b = 5, N_col_cat_dl = 6, N_col_cat_Lum = 7, N_col_cat_mag = 8, N_col_cat_M = 9, N_col_cat_rs = 10 , &
+		max_set_size = 8000000 !=- max is 2**23 (integer is 24 bits)
 
    character(length) :: catalog_titles(N_col_std)='',catalog_heading_format='',catalog_format='',catalog_heads_format=''
 

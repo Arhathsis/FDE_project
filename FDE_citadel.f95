@@ -1,168 +1,149 @@
 !=- Fractal Dimension Estimation
-!=- Â© Stanislav Shirokov, 2014-2020
+!=- © Stanislav Shirokov, 2014-2021
 
 module FDE_citadel
-   use FDE_config
-   use FDE_paths
-   use FDE_scripts
-   use FDE_generators
 
-   use global
+      use global
 
-   character(length) input_command , logscaling
-   real(8) :: start_scale = -1, final_scale = -1, scale_step = -1
+      use FDE_config
+      use FDE_paths
+      use FDE_scripts
+      use FDE_generators
+      use FDE_overleaf
 
-   contains
+      contains
 
-		subroutine preparation
+         !=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=!
 
-				write(*,*) 'Fractal Dimension Estimation is runned' ; write(*,*)
+         subroutine commands
 
-            call define_system
-            call gen_paths
-            call shell_MD_Tree
-            call the_catalog_heading
+               11 continue
+            call preparation
 
-			end subroutine
+				do
+               call input_command(commandN)
+					select case (commandN(1))
 
-      subroutine opening !===============================================================================1
+               !=- The FDE custom command list
+               !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=!
 
-            22 continue
+                  case('matrix')
+                     call gen_FDE_matrix_script
 
-				call preparation
+               !=- The testing custom command list
+               !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=!
 
-				do ; 33 continue ; write(*,*) '--'
+						case ('m')
+							call FDE_testing_MultiCantor_script
 
-					read(*,'(A256)',err=33,end=33) input_command
-                  read(input_command,*,err=33,end=33) command
+               !=- removed from the release version
+               !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=!
 
-					select case (command)
+							!call FDE_testing_script
+                     !call FDE_analysis_external_catalog
+                     !call add_visible_z_script
+                     !call scaling_script
 
-                  case ('reset')
-                     goto 22
+               !=- The FDE-system command list
+               !=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=!
 
-                  case ('scaling')
-                     start_scale=-1 ; final_scale=-1 ; scale_step=-1 ; logscaling=''
-                     read(input_command,*,iostat=iostat_value) command, start_scale, final_scale, scale_step , logscaling
-                        if ( start_scale==-1 .or. final_scale==-1 .or. scale_step==-1 ) then
-                           write(*,*) 'scaling input error: scaling 10 100 10 [log]'
-                           else
-                              call scaling(start_scale, final_scale, scale_step , logscaling)
-                           endif
-
-						case ('cg')
-							!call compaire_graphics
-						case ('exit')
-							goto 11
 						case ('help')
 							call help
-						case ('uca')
-							call uniform_catalog_analysis
-						case ('cca')
-							call cantor_catalog_analysis
-                        case ('ex1')
-                            call example1
-                        case ('meanmd')
-                            call mean_MD(2.0, 3)
-                        !case ('sc')
-                            !call Super_Cantor_analysis(2.1, 3)
-						case ('c')
-							call input_catalogs_analysis
 
-                  case ('avz')
-                     read(input_command,*,iostat=iostat_value) command,command1,command2
-                     if ( command1=='universe' .or. command1=='u' ) call add_visible_z_universe
+                  case ('reset')
+                     goto 11
 
-                  case ('add')
-                     read(input_command,*,iostat=iostat_value) command,command1,command2
-                     if ( command1=='visible' .and. command2=='z') call add_visible_z
+                  case('exit')
+                     exit
 
-                     call add_visible_z   !=- fix
-                     call plot_catalog ( FDE_catalog ) !=- fix
+						case ('delete')
+                     call FDE_delete
 
-                  case ('e')
-                     call analysis_external_FDE_catalog
+                  case default
+                     write(*,*) 'unknown command'
 
-						case (char(225))	!=- rus c
-							call input_catalogs_analysis
+                  end select
 
-						case ('-r c')
-							do
-								!call catalogue ; pause
-								enddo
-						case ('a')
-							!call analytical
-						case ('md')
-							call shell_MD_Tree
-						case ('s')
-							!call samples
-						case ('rs')
-							!call redshift_distance
-						case ('n')
-							read(*,*) n
-							do i=1,n
-								!call samples
-								enddo
-						case ('z')
-							!call redshift_test
-						case ('d')
-							call system('>> log.txt (DEL /S/Q CD MD NP)')
-						case ('dd')
-							call system('>> log.txt (DEL /S/Q CD MD NP Samples Statistics)')
-						case ('ds')
-							call system('>> log.txt (RD /S/Q Samples && MD Samples)')
-						case default
-							write(*,*) '   enter the command..'
+               call set_default
+               call ending
 
-					end select ; enddo ; 11 continue ; write(*,*)
-			end subroutine opening !===========================================================================1
+               enddo
+            end subroutine
 
+         !=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=!
 
+         subroutine FDE_delete
+            integer i
 
-		subroutine help !==================================================================================2
+               select case (commandN(2))
+                  case default   !=- deletes methods & samples (only files)
+                     do i=1,5
+                        call system('>> log.txt (DEL /S/Q '// trim(folders(i)) //')')
+                        enddo
+                  case('-m')     !=- deletes all methods (only files)
+                     do i=2,5
+                        call system('>> log.txt (DEL /S/Q '// trim(folders(i)) //')')
+                        enddo
+                  case('-s')     !=- deletes samples (files and folders)
+                        call system('>> log.txt (RD /S/Q '// trim(folders(1)) //')')   !=- BUG: requires execution of reset command
+                  case('-so')
+                     do i=1,5    !=- deletes methods & samples (files and folders)
+                        call system('>> log.txt (RD /S/Q '// trim(folders(i)) //')')   !=- BUG: requires execution of reset command
+                        enddo
+                  end select
+
+            end
+
+         !=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=!
+
+         subroutine preparation
+               call define_system
+               call gen_paths
+               call shell_MD_Tree
+               call the_catalog_heading
+               call geometry_texts
+                  write(*,*) 'The FDE Citadel has been runned'
+            end subroutine
+
+         !=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=!
+
+         subroutine input_command(commandN)
+            character(len) command,commandN(:)
+               33 continue ; write(*,*) '--' ; commandN(:)='NaN'
+
+					read(*,'(A256)',err=33,end=44) command
+                  read(command,*,iostat=iostat_value,err=33,end=44) commandN ; 44 continue
+
+            end subroutine
+
+         !=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=!
+
+         subroutine set_default  !=- ?
+
+            !call overleaf_default
+            !call math_default
+
+            end subroutine
+
+         !=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=!
+
+		subroutine help
 			implicit none ; character(10) text ; write(*,*)
 
-            write(*,*) '   analysis     - main FDE sqript'
-            write(*,*) '   samples      - VL samples sqript'
-            write(*,*) '   readMDNP(md) - reading middle distance between points from last data'
-            write(*,*)
-            write(*,*) '   CSG(rdm,fractal)    - Cantor Sets Generator'
-            write(*,*) '   SM(set,list(SA,SS,SN,SD)) - Samples Maker'
-            write(*,*)
-            write(*,*) '   MDNPM(set)          - Minimal Distance to Nearest Point'
-            write(*,*) '   MDM(set,Dmd)        - Mutual Distance'
-            write(*,*) '   CDM(set,Dcdd,Dcdi)  - Conditional Density'
-            write(*,*) '   CM                  - Cylinders Method'
             write(*,*) ; write(*,*) '   extend (y/n)?'
 
             read(*,*) text ; if (trim(text)=='y') then
 
-               write(*,*) '   EV(A,dim(A))           - Expected value'
-               write(*,*) '   maxeq(A,dim(A))        - maximal value of A'
-               write(*,*) '   mineq(A,dim(A))        - minimal value of A'
-               write(*,*) '   DescCoord(a,b,r,x,y,z) - conversion from spherical to Cartesian coordinates'
-               write(*,*) '   SphCoord(x,y,z,a,b,r)  - conversion from Cartesian to spherical coordinates'
-               write(*,*)
-               write(*,*) '   fztd(z)              - conversion from redshift to Mpc'
-               write(*,*) '   GalCoord(RA,Dec,l,b) - conversion from galactic to ecliptical coordinates'
-               write(*,*) '   EclCoord(RA,Dec,l,b) - conversion from ecliptical to galactic coordinates'
-               write(*,*)
-               write(*,*) '   filevolume(in,N)   - strings amount of file'
-               write(*,*) '   readfile(in,N,set) - reading from file'
-               write(*,*) '   exist(in,i)        - testing of exist of file'
-               write(*,*) '   strreal(a)         - Convert an integer to string'
-               write(*,*) '   strint(i)          - Convert an integer to string'
-               write(*,*) '   help               - this description'
-               write(*,*) '   opening            - first sqript'
-               write(*,*) '   ending             - end sqript'
-               write(*,*) '   last update 16.03.2017'
-
                write(*,*) ; write(*,*) 'end of HELP' ; write(*,*) ; endif
 
-         end subroutine help !==============================================================================2
+         end
 
-      subroutine ending !================================================================================1
+         !=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=!
+
+      subroutine ending
          write(*,*) ; write(*,*) 'All algorithms are implemented successfully' ; write(*,*) '---=1---'
-         end subroutine ending !============================================================================1
+         end
+
+         !=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=%=!
 
 end module
