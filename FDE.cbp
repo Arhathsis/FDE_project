@@ -20,31 +20,35 @@
 			</Target>
 		</Build>
 		<Unit filename="Cosmology.f95">
-			<Option weight="2" />
-		</Unit>
-		<Unit filename="FDE_catalogs.f95">
 			<Option weight="3" />
 		</Unit>
+		<Unit filename="FDE_Overleaf.f95">
+			<Option weight="2" />
+		</Unit>
+		<Unit filename="FDE_Tables.f95" />
+		<Unit filename="FDE_catalogs.f95">
+			<Option weight="4" />
+		</Unit>
 		<Unit filename="FDE_citadel.f95">
-			<Option weight="6" />
+			<Option weight="8" />
 		</Unit>
 		<Unit filename="FDE_config.f95">
 			<Option weight="1" />
 		</Unit>
 		<Unit filename="FDE_generators.f95">
-			<Option weight="3" />
-		</Unit>
-		<Unit filename="FDE_graphs.f95">
 			<Option weight="4" />
 		</Unit>
+		<Unit filename="FDE_graphs.f95">
+			<Option weight="6" />
+		</Unit>
 		<Unit filename="FDE_methods.f95">
-			<Option weight="2" />
+			<Option weight="5" />
 		</Unit>
 		<Unit filename="FDE_paths.f95">
 			<Option weight="1" />
 		</Unit>
 		<Unit filename="FDE_scripts.f95">
-			<Option weight="5" />
+			<Option weight="7" />
 		</Unit>
 		<Unit filename="GNUplot.f95">
 			<Option weight="1" />
@@ -53,15 +57,11 @@
 			<Option weight="0" />
 		</Unit>
 		<Unit filename="main.f95">
-			<Option weight="7" />
+			<Option weight="9" />
 		</Unit>
 		<Unit filename="math.f95">
-			<Option weight="1" />
+			<Option weight="2" />
 		</Unit>
-		<Extensions>
-			<code_completion />
-			<envvars />
-			<debugger />
-		</Extensions>
+		<Extensions />
 	</Project>
 </CodeBlocks_project_file>
